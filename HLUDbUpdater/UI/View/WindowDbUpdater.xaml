@@ -1,0 +1,72 @@
+﻿<Window x:Class="HLU.UI.View.DbUpdaterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:hlu="clr-namespace:HLU.UI.UserControls;assembly="
+        Title="{Binding Path=WindowTitle}"
+        Width="500"
+        Height="Auto"
+        Focusable="True"
+        Icon="..\..\Icons\HLUIcon.png"
+        Left="Auto"
+        ResizeMode="CanMinimize"
+        ShowInTaskbar="True"
+        SizeToContent="Height"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="SingleBorderWindow">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!--
+                    <ResourceDictionary Source="Dictionary\WindowDictionary.xaml" />
+                    <ResourceDictionary Source="Dictionary\HluTheme.xaml" />
+                -->
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <StackPanel Margin="8">
+        <Grid Name="GridProgressBars"
+              Height="Auto"
+              VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="20" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="10" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="20" />
+            </Grid.RowDefinitions>
+            <Label Grid.Row="1" Grid.Column="1">Test</Label>
+            <ProgressBar Name="ProgressBarOverall"
+                         Grid.Row="1"
+                         Grid.Column="1"
+                         Height="20"
+                         Margin="0,25,0,10"
+                         Maximum="0"
+                         Minimum="0"
+                         Value="{Binding ProgressOverall}" />
+            <Label Grid.Row="2" Grid.Column="1">Test</Label>
+            <ProgressBar Name="ProgressBarActiveScript"
+                         Grid.Row="2"
+                         Grid.Column="1"
+                         Height="20"
+                         Margin="0,25,0,10"
+                         Maximum="0"
+                         Minimum="0"
+                         Value="{Binding ProgressActiveScript}" />
+        </Grid>
+        <TextBox Name="TextBoxMessage"
+                 Height="150"
+                 HorizontalScrollBarVisibility="Auto"
+                 IsEnabled="True"
+                 Text="{Binding Path=MessageText,
+                                Mode=TwoWay,
+                                UpdateSourceTrigger=PropertyChanged,
+                                ValidatesOnDataErrors=True}"
+                 VerticalScrollBarVisibility="Auto" />
+    </StackPanel>
+</Window>
