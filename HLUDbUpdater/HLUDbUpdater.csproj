@@ -60,6 +60,7 @@
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Printing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -79,6 +80,8 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Base36.cs" />
+    <Compile Include="Converters\Bool2VisibilityConverter.cs" />
     <Compile Include="Data\Connection\DbBase.cs" />
     <Compile Include="Data\Connection\DbFactory.cs" />
     <Compile Include="Data\Connection\DbOdbc.cs" />
@@ -87,13 +90,23 @@
     <Compile Include="Data\Connection\DbPgSql.cs" />
     <Compile Include="Data\Connection\DbSqlServer.cs" />
     <Compile Include="Data\Connection\OdbcCP32.cs" />
+    <Compile Include="Data\DbVersion.cs" />
     <Compile Include="Data\Model\HLUDataVersion.cs">
       <DependentUpon>HluDataVersion.xsd</DependentUpon>
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="Data\Model\HluDataVersion.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>HluDataVersion.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="Data\Model\HluDataVersionOld.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>HluDataVersionOld.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="Data\Model\HluTableAdapters.cs">
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="SqlBuilder.cs" />
     <Compile Include="UI\RelayCommand.cs" />
@@ -170,6 +183,17 @@
     <None Include="Data\Model\HluDataVersion.xss">
       <DependentUpon>HluDataVersion.xsd</DependentUpon>
     </None>
+    <None Include="Data\Model\HluDataVersionOld.xsc">
+      <DependentUpon>HluDataVersionOld.xsd</DependentUpon>
+    </None>
+    <None Include="Data\Model\HluDataVersionOld.xsd">
+      <SubType>Designer</SubType>
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>HluDataVersionOld.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="Data\Model\HluDataVersionOld.xss">
+      <DependentUpon>HluDataVersionOld.xsd</DependentUpon>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -202,6 +226,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="UI\View\Connection\ViewSelectConnection.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="UI\View\Dictionary\Bool2VisibilityConverterDictionary.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
