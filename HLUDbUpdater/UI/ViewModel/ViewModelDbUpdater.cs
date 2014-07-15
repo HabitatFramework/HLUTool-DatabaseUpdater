@@ -25,6 +25,7 @@ using System.Linq;
 using HLU.Data;
 using HLU.Data.Connection;
 using HLUDbUpdater.Data.Model;
+using HLUDbUpdater.Data.Model.HluDataSetTableAdapters;
 
 namespace HLU.UI.ViewModel
 {
@@ -37,7 +38,9 @@ namespace HLU.UI.ViewModel
         private string _displayName = "HLU Database Updater";
         private string _messageText;
         private DbBase _db;
-        private HluDataVersion _hluDS;
+        private HluDataSet _hluDS;
+        private TableAdapterManager _hluTableAdapterMgr;
+        private Versions _versions;
         private double _progressOverall;
         private double _progressScript;
         private double _overallCount;
@@ -146,14 +149,14 @@ namespace HLU.UI.ViewModel
 
                     // Check if the database contains the new lut_version
                     // table structure.
-                    _hluDS = new HluDataVersion();
+                    _hluDS = new HluDataSet();
                     if (!_db.ContainsDataSet(_hluDS, out errorMessage))
                     {
                         _dbVersion = Base36.NumberToBase36(0);
 
                         // Check if the database contains the old lut_version
                         // table structure.
-                        HluDataVersionOld _hluDSOld = new HluDataVersionOld();
+                        HluDataSetOld _hluDSOld = new HluDataSetOld();
                         if (!_db.ContainsDataSet(_hluDS, out errorMessage))
                         {
                             if (String.IsNullOrEmpty(errorMessage))
@@ -258,6 +261,29 @@ namespace HLU.UI.ViewModel
 
         #endregion
 
+        #region Data Adapter
+
+        private bool CreateTableAdapterMgr()
+        {
+            try
+            {
+                // Create a table adapter manager for the dataset and connection.
+                _hluTableAdapterMgr = new TableAdapterManager(_db, TableAdapterManager.Scope.Lookup);
+
+                // Fill the lookup tables (at least lut_version must be filled at this point).
+                //_hluTableAdapterMgr.Fill(_hluDS, TableAdapterManager.Scope.Lookup, false);
+
+                // Create a Versions object for the db.
+                _versions = new Versions(_db, _hluDS, _hluTableAdapterMgr);
+
+                return true;
+            }
+            catch { return false; }
+
+        }
+
+        #endregion
+
         #region ProcessScripts
 
         /// <summary>
@@ -315,17 +341,36 @@ namespace HLU.UI.ViewModel
 
         internal bool ExecuteScript(string script)
         {
-            using (StreamReader sr = File.OpenText(script))
+            try
             {
-                string s = String.Empty;
-                while ((s = sr.ReadLine()) != null)
+                string[] lines = File.ReadAllLines(script);
+
+                int lineCount = 0;
+                foreach (string line in lines)
                 {
-                    //we're just testing read speeds
+                    if ((line.Length > 0) && (!string.IsNullOrEmpty(line.Trim())))
+                    {
+                        string command = line.TrimStart().ToUpper();
+
+                        if line.Substring(0,2).Contains<
+
+                        // Get the first word in the line
+                        line.Any(s=
+                        string[] words = line.Split(' ');
+
+                        if words[0]
+
+                    }
+
                 }
+
+                return true;
             }
-
-
-            return true;
+            catch
+            {
+                // Rollback the transaction.
+                return false;
+            }
         }
 
         #endregion

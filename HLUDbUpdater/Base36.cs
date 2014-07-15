@@ -3,7 +3,43 @@ using System.Text;
 
 namespace HLU
 {
-	/// <summary>
+    # region Exceptions
+
+    public class InvalidBase36NumberException : Exception
+    {
+        public InvalidBase36NumberException(string val)
+            : base(val)
+        {
+        }
+    }
+
+    public class InvalidBase36ValueException : Exception
+    {
+        public InvalidBase36ValueException(long val)
+            : base(val.ToString())
+        {
+        }
+    }
+
+    public class InvalidBase36DigitException : Exception
+    {
+        public InvalidBase36DigitException(char val)
+            : base(val.ToString())
+        {
+        }
+    }
+
+    public class InvalidBase36DigitValueException : Exception
+    {
+        public InvalidBase36DigitValueException(byte val)
+            : base(val.ToString())
+        {
+        }
+    }
+
+    #endregion
+
+    /// <summary>
 	/// Class representing a Base36 number
 	/// </summary>
 	public struct Base36
@@ -20,10 +56,10 @@ namespace HLU
 		public static readonly Base36 MinValue = new Base36(long.MinValue + 1);
 
 		#endregion
-		
-		#region Fields
 
-		private long _numericValue;
+        #region Fields
+
+        private long _numericValue;
 
 		#endregion
 

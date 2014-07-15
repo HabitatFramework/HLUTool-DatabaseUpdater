@@ -1,7 +1,4 @@
-﻿namespace HLUDbUpdater.Data.Model
-{
-}
-// HLUTool is used to view and maintain habitat and land use GIS data.
+﻿// HLUTool is used to view and maintain habitat and land use GIS data.
 // Copyright © 2013 Andy Foy
 // 
 // This file is part of HLUTool.
@@ -22,7 +19,7 @@
 namespace HLUDbUpdater.Data.Model
 {
 
-    public partial class HluDataVersion
+    public partial class HluDataSet
     {
     }
 }

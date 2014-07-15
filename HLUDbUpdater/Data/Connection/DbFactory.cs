@@ -18,9 +18,9 @@
 
 using System;
 using System.Windows;
-using HLUDbUpdater.Properties;
 using HLU.UI.View.Connection;
 using HLU.UI.ViewModel;
+using HLUDbUpdater.Properties;
 
 namespace HLU.Data.Connection
 {

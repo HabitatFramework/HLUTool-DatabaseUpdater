@@ -90,20 +90,20 @@
     <Compile Include="Data\Connection\DbPgSql.cs" />
     <Compile Include="Data\Connection\DbSqlServer.cs" />
     <Compile Include="Data\Connection\OdbcCP32.cs" />
-    <Compile Include="Data\DbVersion.cs" />
-    <Compile Include="Data\Model\HLUDataVersion.cs">
-      <DependentUpon>HluDataVersion.xsd</DependentUpon>
+    <Compile Include="Data\Versions.cs" />
+    <Compile Include="Data\Model\HluDataSet.cs">
+      <DependentUpon>HluDataSet.xsd</DependentUpon>
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Data\Model\HluDataVersion.Designer.cs">
+    <Compile Include="Data\Model\HluDataSet.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>HluDataVersion.xsd</DependentUpon>
+      <DependentUpon>HluDataSet.xsd</DependentUpon>
     </Compile>
-    <Compile Include="Data\Model\HluDataVersionOld.Designer.cs">
+    <Compile Include="Data\Model\HluDataSetOld.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>HluDataVersionOld.xsd</DependentUpon>
+      <DependentUpon>HluDataSetOld.xsd</DependentUpon>
     </Compile>
     <Compile Include="Data\Model\HluTableAdapters.cs">
       <SubType>Component</SubType>
@@ -172,27 +172,27 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <None Include="app.config" />
-    <None Include="Data\Model\HluDataVersion.xsc">
-      <DependentUpon>HluDataVersion.xsd</DependentUpon>
+    <None Include="Data\Model\HluDataSet.xsc">
+      <DependentUpon>HluDataSet.xsd</DependentUpon>
     </None>
-    <None Include="Data\Model\HluDataVersion.xsd">
+    <None Include="Data\Model\HluDataSet.xsd">
       <SubType>Designer</SubType>
       <Generator>MSDataSetGenerator</Generator>
-      <LastGenOutput>HluDataVersion.Designer.cs</LastGenOutput>
+      <LastGenOutput>HluDataSet.Designer.cs</LastGenOutput>
     </None>
-    <None Include="Data\Model\HluDataVersion.xss">
-      <DependentUpon>HluDataVersion.xsd</DependentUpon>
+    <None Include="Data\Model\HluDataSet.xss">
+      <DependentUpon>HluDataSet.xsd</DependentUpon>
     </None>
-    <None Include="Data\Model\HluDataVersionOld.xsc">
-      <DependentUpon>HluDataVersionOld.xsd</DependentUpon>
+    <None Include="Data\Model\HluDataSetOld.xsc">
+      <DependentUpon>HluDataSetOld.xsd</DependentUpon>
     </None>
-    <None Include="Data\Model\HluDataVersionOld.xsd">
+    <None Include="Data\Model\HluDataSetOld.xsd">
       <SubType>Designer</SubType>
       <Generator>MSDataSetGenerator</Generator>
-      <LastGenOutput>HluDataVersionOld.Designer.cs</LastGenOutput>
+      <LastGenOutput>HluDataSetOld.Designer.cs</LastGenOutput>
     </None>
-    <None Include="Data\Model\HluDataVersionOld.xss">
-      <DependentUpon>HluDataVersionOld.xsd</DependentUpon>
+    <None Include="Data\Model\HluDataSetOld.xss">
+      <DependentUpon>HluDataSetOld.xsd</DependentUpon>
     </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
