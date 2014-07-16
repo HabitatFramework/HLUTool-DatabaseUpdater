@@ -23,3 +23,11 @@ namespace HLUDbUpdater.Data.Model
     {
     }
 }
+
+namespace HLUDbUpdater.Data.Model.HluDataSetTableAdapters
+{
+    
+    
+    public partial class lut_versionTableAdapter {
+    }
+}

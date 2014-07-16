@@ -532,9 +532,10 @@ namespace HLU.Data.Connection
             }
         }
 
-        public override int ExecuteNonQuery(string sql, int commandTimeout, CommandType commandType)
+        public override int ExecuteNonQuery(string sql, int commandTimeout, CommandType commandType, out string errorMessage)
         {
             _errorMessage = String.Empty;
+            errorMessage = _errorMessage;
             if (String.IsNullOrEmpty(sql)) return -1;
             ConnectionState previousConnectionState = _connection.State;
             try
@@ -553,6 +554,7 @@ namespace HLU.Data.Connection
             catch (Exception ex)
             {
                 _errorMessage = ex.Message;
+                errorMessage = _errorMessage;
                 return -1;
             }
             finally { if (previousConnectionState == ConnectionState.Closed) _connection.Close(); }

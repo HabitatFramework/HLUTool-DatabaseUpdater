@@ -392,13 +392,6 @@ namespace HLUDbUpdater.Data.Model {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "4.0.0.0")]
-            public lut_versionRow FindByapp_version(string app_version) {
-                return ((lut_versionRow)(this.Rows.Find(new object[] {
-                            app_version})));
-            }
-            
-            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "4.0.0.0")]
             public override global::System.Data.DataTable Clone() {
                 lut_versionDataTable cln = ((lut_versionDataTable)(base.Clone()));
                 cln.InitVars();
@@ -428,10 +421,9 @@ namespace HLUDbUpdater.Data.Model {
                 base.Columns.Add(this.columndb_version);
                 this.columnihs_version = new global::System.Data.DataColumn("ihs_version", typeof(string), null, global::System.Data.MappingType.Element);
                 base.Columns.Add(this.columnihs_version);
-                this.Constraints.Add(new global::System.Data.UniqueConstraint("Constraint1", new global::System.Data.DataColumn[] {
-                                this.columnapp_version}, true));
                 this.columnapp_version.AllowDBNull = false;
-                this.columnapp_version.Unique = true;
+                this.columndb_version.AllowDBNull = false;
+                this.columnihs_version.AllowDBNull = false;
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -587,12 +579,7 @@ namespace HLUDbUpdater.Data.Model {
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "4.0.0.0")]
             public string db_version {
                 get {
-                    try {
-                        return ((string)(this[this.tablelut_version.db_versionColumn]));
-                    }
-                    catch (global::System.InvalidCastException e) {
-                        throw new global::System.Data.StrongTypingException("The value for column \'db_version\' in table \'lut_version\' is DBNull.", e);
-                    }
+                    return ((string)(this[this.tablelut_version.db_versionColumn]));
                 }
                 set {
                     this[this.tablelut_version.db_versionColumn] = value;
@@ -603,40 +590,11 @@ namespace HLUDbUpdater.Data.Model {
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "4.0.0.0")]
             public string ihs_version {
                 get {
-                    try {
-                        return ((string)(this[this.tablelut_version.ihs_versionColumn]));
-                    }
-                    catch (global::System.InvalidCastException e) {
-                        throw new global::System.Data.StrongTypingException("The value for column \'ihs_version\' in table \'lut_version\' is DBNull.", e);
-                    }
+                    return ((string)(this[this.tablelut_version.ihs_versionColumn]));
                 }
                 set {
                     this[this.tablelut_version.ihs_versionColumn] = value;
                 }
-            }
-            
-            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "4.0.0.0")]
-            public bool Isdb_versionNull() {
-                return this.IsNull(this.tablelut_version.db_versionColumn);
-            }
-            
-            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "4.0.0.0")]
-            public void Setdb_versionNull() {
-                this[this.tablelut_version.db_versionColumn] = global::System.Convert.DBNull;
-            }
-            
-            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "4.0.0.0")]
-            public bool Isihs_versionNull() {
-                return this.IsNull(this.tablelut_version.ihs_versionColumn);
-            }
-            
-            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "4.0.0.0")]
-            public void Setihs_versionNull() {
-                this[this.tablelut_version.ihs_versionColumn] = global::System.Convert.DBNull;
             }
         }
         
@@ -768,6 +726,13 @@ namespace HLUDbUpdater.Data.Model.HluDataSetTableAdapters {
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "4.0.0.0")]
         private void InitAdapter() {
             this._adapter = new global::System.Data.SqlClient.SqlDataAdapter();
+            global::System.Data.Common.DataTableMapping tableMapping = new global::System.Data.Common.DataTableMapping();
+            tableMapping.SourceTable = "Table";
+            tableMapping.DataSetTable = "lut_version";
+            tableMapping.ColumnMappings.Add("app_version", "app_version");
+            tableMapping.ColumnMappings.Add("db_version", "db_version");
+            tableMapping.ColumnMappings.Add("ihs_version", "ihs_version");
+            this._adapter.TableMappings.Add(tableMapping);
             this._adapter.DeleteCommand = new global::System.Data.SqlClient.SqlCommand();
             this._adapter.DeleteCommand.Connection = this.Connection;
             this._adapter.DeleteCommand.CommandText = "DELETE FROM [lut_version] WHERE (([version] = @Original_version) AND ((@IsNull_cr" +
@@ -782,13 +747,12 @@ namespace HLUDbUpdater.Data.Model.HluDataSetTableAdapters {
             this._adapter.DeleteCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@Original_changes", global::System.Data.SqlDbType.NVarChar, 0, global::System.Data.ParameterDirection.Input, 0, 0, "changes", global::System.Data.DataRowVersion.Original, false, null, "", "", ""));
             this._adapter.InsertCommand = new global::System.Data.SqlClient.SqlCommand();
             this._adapter.InsertCommand.Connection = this.Connection;
-            this._adapter.InsertCommand.CommandText = "INSERT INTO [lut_version] ([version], [created_date], [changes]) VALUES (@version" +
-                ", @created_date, @changes);\r\nSELECT version, created_date, changes FROM lut_vers" +
-                "ion WHERE (version = @version)";
+            this._adapter.InsertCommand.CommandText = "INSERT INTO [lut_version] ([app_version], [db_version], [ihs_version]) VALUES (@a" +
+                "pp_version, @db_version, @ihs_version)";
             this._adapter.InsertCommand.CommandType = global::System.Data.CommandType.Text;
-            this._adapter.InsertCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@version", global::System.Data.SqlDbType.Real, 0, global::System.Data.ParameterDirection.Input, 0, 0, "version", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
-            this._adapter.InsertCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@created_date", global::System.Data.SqlDbType.DateTime, 0, global::System.Data.ParameterDirection.Input, 0, 0, "created_date", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
-            this._adapter.InsertCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@changes", global::System.Data.SqlDbType.NVarChar, 0, global::System.Data.ParameterDirection.Input, 0, 0, "changes", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
+            this._adapter.InsertCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@app_version", global::System.Data.SqlDbType.NVarChar, 0, global::System.Data.ParameterDirection.Input, 0, 0, "app_version", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
+            this._adapter.InsertCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@db_version", global::System.Data.SqlDbType.NVarChar, 0, global::System.Data.ParameterDirection.Input, 0, 0, "db_version", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
+            this._adapter.InsertCommand.Parameters.Add(new global::System.Data.SqlClient.SqlParameter("@ihs_version", global::System.Data.SqlDbType.NVarChar, 0, global::System.Data.ParameterDirection.Input, 0, 0, "ihs_version", global::System.Data.DataRowVersion.Current, false, null, "", "", ""));
             this._adapter.UpdateCommand = new global::System.Data.SqlClient.SqlCommand();
             this._adapter.UpdateCommand.Connection = this.Connection;
             this._adapter.UpdateCommand.CommandText = @"UPDATE [lut_version] SET [version] = @version, [created_date] = @created_date, [changes] = @changes WHERE (([version] = @Original_version) AND ((@IsNull_created_date = 1 AND [created_date] IS NULL) OR ([created_date] = @Original_created_date)) AND ((@IsNull_changes = 1 AND [changes] IS NULL) OR ([changes] = @Original_changes)));
@@ -817,7 +781,7 @@ SELECT version, created_date, changes FROM lut_version WHERE (version = @version
             this._commandCollection = new global::System.Data.SqlClient.SqlCommand[1];
             this._commandCollection[0] = new global::System.Data.SqlClient.SqlCommand();
             this._commandCollection[0].Connection = this.Connection;
-            this._commandCollection[0].CommandText = "SELECT          *\r\nFROM            lut_version";
+            this._commandCollection[0].CommandText = "SELECT app_version, db_version, ihs_version\r FROM lut_version";
             this._commandCollection[0].CommandType = global::System.Data.CommandType.Text;
         }
         
@@ -916,19 +880,24 @@ SELECT version, created_date, changes FROM lut_version WHERE (version = @version
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "4.0.0.0")]
         [global::System.ComponentModel.Design.HelpKeywordAttribute("vs.data.TableAdapter")]
         [global::System.ComponentModel.DataObjectMethodAttribute(global::System.ComponentModel.DataObjectMethodType.Insert, true)]
-        public virtual int Insert(float version, global::System.Nullable<global::System.DateTime> created_date, string changes) {
-            this.Adapter.InsertCommand.Parameters[0].Value = ((float)(version));
-            if ((created_date.HasValue == true)) {
-                this.Adapter.InsertCommand.Parameters[1].Value = ((System.DateTime)(created_date.Value));
+        public virtual int Insert(string app_version, string db_version, string ihs_version) {
+            if ((app_version == null)) {
+                throw new global::System.ArgumentNullException("app_version");
             }
             else {
-                this.Adapter.InsertCommand.Parameters[1].Value = global::System.DBNull.Value;
+                this.Adapter.InsertCommand.Parameters[0].Value = ((string)(app_version));
             }
-            if ((changes == null)) {
-                this.Adapter.InsertCommand.Parameters[2].Value = global::System.DBNull.Value;
+            if ((db_version == null)) {
+                throw new global::System.ArgumentNullException("db_version");
             }
             else {
-                this.Adapter.InsertCommand.Parameters[2].Value = ((string)(changes));
+                this.Adapter.InsertCommand.Parameters[1].Value = ((string)(db_version));
+            }
+            if ((ihs_version == null)) {
+                throw new global::System.ArgumentNullException("ihs_version");
+            }
+            else {
+                this.Adapter.InsertCommand.Parameters[2].Value = ((string)(ihs_version));
             }
             global::System.Data.ConnectionState previousConnectionState = this.Adapter.InsertCommand.Connection.State;
             if (((this.Adapter.InsertCommand.Connection.State & global::System.Data.ConnectionState.Open) 

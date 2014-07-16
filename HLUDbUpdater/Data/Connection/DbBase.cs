@@ -934,7 +934,7 @@ namespace HLU.Data.Connection
 
         public abstract IDataReader ExecuteReader(string sql, int commandTimeout, CommandType commandType);
 
-        public abstract int ExecuteNonQuery(string sql, int commandTimeout, CommandType commandType);
+        public abstract int ExecuteNonQuery(string sql, int commandTimeout, CommandType commandType, out string errorMessage);
 
         public abstract object ExecuteScalar(string sql, int commandTimeout, CommandType commandType);
 
@@ -975,7 +975,8 @@ namespace HLU.Data.Connection
                         QualifyTableName(adoTable.TableName))).Append(primaryKey.Length > 0 ?
                         primaryKey.ToString() : String.Empty).Append(")");
 
-                int returnVal = ExecuteNonQuery(sql.ToString(), Connection.ConnectionTimeout, CommandType.Text);
+                string errorMessage;
+                int returnVal = ExecuteNonQuery(sql.ToString(), Connection.ConnectionTimeout, CommandType.Text, out errorMessage);
 
                 return returnVal != -1;
             }

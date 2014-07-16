@@ -17,6 +17,8 @@
 // along with HLUTool.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
+using System.Data;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Input;
 using System.IO;
@@ -31,6 +33,22 @@ namespace HLU.UI.ViewModel
 {
     class ViewModelDbUpdater : ViewModelBase
     {
+        #region Enums
+
+        private enum SqlCommands
+        {
+            Create,
+            Drop,
+            Alter,
+            Truncate,
+            Insert,
+            Update,
+            Delete,
+            Go
+        }
+
+        #endregion
+
         #region Private Members
 
         private ICommand _okCommand;
@@ -45,9 +63,10 @@ namespace HLU.UI.ViewModel
         private double _progressScript;
         private double _overallCount;
         private double _scriptCount;
-        private Base36 _dbVersion = new Base36(0);
+        private string _dbVersion;
         private bool _processingScripts = false;
         private string[] _scripts;
+        private List<string> _sqlCommands = new List<string>();
 
         #endregion
 
@@ -157,7 +176,7 @@ namespace HLU.UI.ViewModel
                         // Check if the database contains the old lut_version
                         // table structure.
                         HluDataSetOld _hluDSOld = new HluDataSetOld();
-                        if (!_db.ContainsDataSet(_hluDS, out errorMessage))
+                        if (!_db.ContainsDataSet(_hluDSOld, out errorMessage))
                         {
                             if (String.IsNullOrEmpty(errorMessage))
                             {
@@ -170,10 +189,21 @@ namespace HLU.UI.ViewModel
                         }
                         else
                         {
+                            // The old lut_version table structure was found so the
+                            // new one will be checked for later after the first
+                            // script has been run.
+                            break;
                         }
                     }
                     else
                     {
+                        // The new lut_version table structure has been found so
+                        // create a table adapter for the database.
+                        if (!CreateTableAdapterMgr())
+                        {
+                            throw new Exception("There were errors loading data from the database." +
+                                "\n\nThe database schema is invalid.");
+                        }
                         break;
                     }
                 }
@@ -271,7 +301,7 @@ namespace HLU.UI.ViewModel
                 _hluTableAdapterMgr = new TableAdapterManager(_db, TableAdapterManager.Scope.Lookup);
 
                 // Fill the lookup tables (at least lut_version must be filled at this point).
-                //_hluTableAdapterMgr.Fill(_hluDS, TableAdapterManager.Scope.Lookup, false);
+                _hluTableAdapterMgr.Fill(_hluDS, TableAdapterManager.Scope.Lookup, false);
 
                 // Create a Versions object for the db.
                 _versions = new Versions(_db, _hluDS, _hluTableAdapterMgr);
@@ -296,13 +326,12 @@ namespace HLU.UI.ViewModel
             try
             {
                 // Get the current directory path of the executing assembly.
-                string currentDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase);
-                currentDirectory = Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
+                    //string currentDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase);
+                string currentDirectory = Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath);
 
                 // Get the directory of the Scripts sub-folder.
                 string scriptsDirectory = Path.Combine(currentDirectory, "Scripts");
-                string scriptsPath = new Uri(scriptsDirectory).LocalPath;
-                scriptsPath = new Uri(scriptsDirectory).AbsolutePath;
+                string scriptsPath = new Uri(scriptsDirectory).AbsolutePath;
 
                 // Get an array of all the .sql files in the sub-folder.
                 string[] scripts = Directory.GetFiles(scriptsPath, "*.sql").OrderBy(f => f).ToArray();
@@ -321,17 +350,24 @@ namespace HLU.UI.ViewModel
             // Indicate that the scripts are being processed (which will
             // hide the buttons and show the progress bars.
             _processingScripts = true;
-            OnPropertyChanged("HideWhenProcessing");
-            OnPropertyChanged("ShowWhenProcessing");
 
             // Set the overall progress bar maximum.
             OverallCount = _scripts.Length;
-            ProgressOverall = 1;
+            OnPropertyChanged("HideWhenProcessing");
+            OnPropertyChanged("ShowWhenProcessing");
+            DispatcherHelper.DoEvents();
+
+            // Convert the enum of SQL commands into a list (for comparing
+            // with later).
+            _sqlCommands = Enum.GetNames(typeof(SqlCommands)).ToList();
 
             // Loop through each script and execute the sql commands
             // in the file.
             foreach (string script in _scripts)
             {
+                // Check the script is the next in sequence.
+
+                // Execute the script.
                 if (ExecuteScript(script) == false)
                     return false;
             }
@@ -341,35 +377,118 @@ namespace HLU.UI.ViewModel
 
         internal bool ExecuteScript(string script)
         {
+            bool scriptCompleted = false;
+            string errorMessage;
+
             try
             {
+                // Read all the lines in the script into an array.
                 string[] lines = File.ReadAllLines(script);
 
-                int lineCount = 0;
+                // Set the script progress bar maximum value to the
+                // number of lines in the script.
+                ScriptCount = lines.Length;
+                OnPropertyChanged("HideWhenProcessing");
+                OnPropertyChanged("ShowWhenProcessing");
+
+                // Start a database transaction.
+                _db.BeginTransaction(true, IsolationLevel.ReadCommitted);
+
+                // Process each line in the array.
+                ProgressScript = 0;
+
                 foreach (string line in lines)
                 {
-                    if ((line.Length > 0) && (!string.IsNullOrEmpty(line.Trim())))
+                    // Increment the progress bar for each line.
+                    ProgressScript += 1;
+                    OnPropertyChanged("HideWhenProcessing");
+                    OnPropertyChanged("ShowWhenProcessing");
+                    DispatcherHelper.DoEvents();
+
+                    // Remove any leading or trailing spaces from the line
+                    // to store as the sql command.
+                    string sqlCmd = line.Trim();
+
+                    // Skip the line if it is empty.
+                    if ((sqlCmd.Length == 0) || (string.IsNullOrEmpty(sqlCmd)))
+                        continue;
+
+                    // Break the sql command into words.
+                    string[] words = sqlCmd.Split(' ');
+
+                    // If there are no words then skip to the next line.
+                    if (words.Length == 0)
+                        continue;
+
+                    // Check if the first word is one of the valid sql commands.
+                    string firstWord = words[0];
+                    if (!_sqlCommands.Any(s => firstWord.ToLower().Contains(s.ToLower())))
+                        continue;
+
+                    // Execute the sql command.
+                    if (_db.ExecuteNonQuery(sqlCmd,
+                        _db.Connection.ConnectionTimeout, CommandType.Text, out errorMessage) == -1)
                     {
-                        string command = line.TrimStart().ToUpper();
-
-                        if line.Substring(0,2).Contains<
-
-                        // Get the first word in the line
-                        line.Any(s=
-                        string[] words = line.Split(' ');
-
-                        if words[0]
-
+                        if (!String.IsNullOrEmpty(errorMessage))
+                            throw new Exception(String.Format("Failed to execute command\n\n'{0}'.\n\n{1}.",
+                                sqlCmd, errorMessage));
                     }
-
                 }
 
-                return true;
+                // Commit the database transaction.
+                _db.CommitTransaction();
+
+                // Extract the script number from the file path.
+                string scriptName = Path.GetFileNameWithoutExtension(script);
+
+                // If this was the first ever script then check if the
+                // database now contains the new lut_version table
+                // structure.
+                if ((Base36.Base36ToNumber(scriptName) == 1) && (_hluTableAdapterMgr == null))
+                {
+                    if (!_db.ContainsDataSet(_hluDS, out errorMessage))
+                    {
+                        MessageBox.Show("The database schema is invalid." +
+                            errorMessage + "\n\nThe database has not been updated correctly.", _displayName,
+                            MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        throw new Exception();
+                    }
+
+                    // Create a table adapter for the database
+                    if (!CreateTableAdapterMgr())
+                    {
+                        MessageBox.Show("There were errors loading data from the database." +
+                            errorMessage + "\n\nThe database has not been updated correctly.", _displayName,
+                            MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        throw new Exception();
+                    }
+                }
+
+                // Update the database version in the lut_version table with the latest
+                // script name.
+                _versions.DbVersion = scriptName;
+
+                // Indicate that the script completed successfully.
+                scriptCompleted = true;
+
+                return scriptCompleted;
             }
-            catch
+            catch (Exception ex)
             {
                 // Rollback the transaction.
-                return false;
+                _db.RollbackTransaction();
+
+                MessageBox.Show(ex.Message + "\n\nUpdate stopped.", _displayName,
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+
+                return scriptCompleted;
+            }
+            finally
+            {
+                // Delete the script file if it was processed successfully.
+                if (scriptCompleted)
+                {
+                }
             }
         }
 

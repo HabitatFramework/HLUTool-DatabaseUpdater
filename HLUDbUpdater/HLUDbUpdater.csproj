@@ -108,6 +108,7 @@
     <Compile Include="Data\Model\HluTableAdapters.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="DispatcherHelper.cs" />
     <Compile Include="SqlBuilder.cs" />
     <Compile Include="UI\RelayCommand.cs" />
     <Compile Include="UI\UserControls\PasswordBoxAssistant.cs" />
