@@ -34,7 +34,7 @@ namespace HLU.Data
         HluDataSet _hluDataset;
         TableAdapterManager _hluTableAdapterMgr;
         HluDataSet.lut_versionRow _versionRow = null;
-        private string _dbVersion = null;
+        private long _dbVersion = -1;
 
         #endregion
 
@@ -63,12 +63,12 @@ namespace HLU.Data
 
         #region Public Properties
 
-        public string DbVersion
+        public long DbVersion
         {
             get
             {
                 // If the database version has not already been retrieved ...
-                if (_dbVersion == null)
+                if (_dbVersion == -1)
                 {
                     // Fill the lut_version table adapter from the database.
                     _hluTableAdapterMgr.Fill(_hluDataset, typeof(HluDataSet.lut_versionDataTable), true);
@@ -83,26 +83,27 @@ namespace HLU.Data
                         // Get the value from the dbVersion column.
                         string dbVer = _versionRow.db_version;
                         if (String.IsNullOrEmpty(dbVer))
-                            _dbVersion = Base36.NumberToBase36(0);
+                            _dbVersion = 0;
                         else
-                            _dbVersion = dbVer;
+                            _dbVersion = Base36.Base36ToNumber(dbVer);
                     }
                     else
                     {
-                        _dbVersion = Base36.NumberToBase36(0);
+                        _dbVersion = 0;
                     }
                 }
                 return _dbVersion;
             }
             set
             {
+                _dbVersion = value;
                 try
                 {
                     // Store new database version in lut_version table.
                     if (_versionRow != null)
-                        _versionRow.db_version = _dbVersion;
+                        _versionRow.db_version = Base36.NumberToBase36(_dbVersion);
                     else
-                        _versionRow = _hluDataset.lut_version.Addlut_versionRow(string.Empty, _dbVersion, string.Empty);
+                        _versionRow = _hluDataset.lut_version.Addlut_versionRow(string.Empty, Base36.NumberToBase36(_dbVersion), string.Empty);
 
                     _hluTableAdapterMgr.lut_versionTableAdapter.Update(_versionRow);
                 }
@@ -127,7 +128,7 @@ namespace HLU.Data
             catch { return -1; }
         }
 
-        public string DbVersionString(int incidNumber)
+        public static string DbVersionString(int incidNumber)
         {
             return Base36.NumberToBase36(incidNumber);
         }

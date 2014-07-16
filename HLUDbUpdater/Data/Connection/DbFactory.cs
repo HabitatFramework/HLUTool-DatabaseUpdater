@@ -29,6 +29,9 @@ namespace HLU.Data.Connection
         private static ViewSelectConnection _selConnWindow;
         private static ViewModelSelectConnection _selConnViewModel;
         private static ConnectionTypes _connType;
+        private static string _connString;
+        private static string _defaultSchema;
+        private static bool _promptPwd;
 
         public static DbBase CreateConnection()
         {
@@ -96,6 +99,65 @@ namespace HLU.Data.Connection
                         Resources.PasswordMaskString, _useAutomaticCommandBuilders, 
                         true, _dbIsUnicode, _dbUseTimeZone,
                         _dbTextLength, _dbBinaryLength, _dbTimePrecision, 
+                        _dbNumericPrecision, _dbNumericScale);
+                    break;
+            }
+
+            _connString = connString;
+            _defaultSchema = defaultSchema;
+            _promptPwd = promptPwd;
+
+            return db;
+        }
+
+        public static DbBase RefreshConnection()
+        {
+            DbBase db = null;
+
+            bool _useAutomaticCommandBuilders = true;
+            bool _dbIsUnicode = true;
+            bool _dbUseTimeZone = true;
+            uint _dbTextLength = 50;
+            uint _dbBinaryLength = 50;
+            uint _dbTimePrecision = 10;
+            uint _dbNumericPrecision = 10;
+            uint _dbNumericScale = 10;
+
+            switch (_connType)
+            {
+                case ConnectionTypes.ODBC:
+                    db = new DbOdbc(ref _connString, ref _defaultSchema, ref _promptPwd,
+                        Resources.PasswordMaskString, _useAutomaticCommandBuilders,
+                        true, _dbIsUnicode, _dbUseTimeZone,
+                        _dbTextLength, _dbBinaryLength, _dbTimePrecision,
+                        _dbNumericPrecision, _dbNumericScale);
+                    break;
+                case ConnectionTypes.OleDb:
+                    db = new DbOleDb(ref _connString, ref _defaultSchema, ref _promptPwd,
+                        Resources.PasswordMaskString, _useAutomaticCommandBuilders,
+                        true, _dbIsUnicode, _dbUseTimeZone,
+                        _dbTextLength, _dbBinaryLength, _dbTimePrecision,
+                        _dbNumericPrecision, _dbNumericScale);
+                    break;
+                case ConnectionTypes.Oracle:
+                    db = new DbOracle(ref _connString, ref _defaultSchema, ref _promptPwd,
+                        Resources.PasswordMaskString, _useAutomaticCommandBuilders,
+                        true, _dbIsUnicode, _dbUseTimeZone,
+                        _dbTextLength, _dbBinaryLength, _dbTimePrecision,
+                        _dbNumericPrecision, _dbNumericScale);
+                    break;
+                case ConnectionTypes.PostgreSQL:
+                    db = new DbPgSql(ref _connString, ref _defaultSchema, ref _promptPwd,
+                        Resources.PasswordMaskString, _useAutomaticCommandBuilders,
+                        true, _dbIsUnicode, _dbUseTimeZone,
+                        _dbTextLength, _dbBinaryLength, _dbTimePrecision,
+                        _dbNumericPrecision, _dbNumericScale);
+                    break;
+                case ConnectionTypes.SQLServer:
+                    db = new DbSqlServer(ref _connString, ref _defaultSchema, ref _promptPwd,
+                        Resources.PasswordMaskString, _useAutomaticCommandBuilders,
+                        true, _dbIsUnicode, _dbUseTimeZone,
+                        _dbTextLength, _dbBinaryLength, _dbTimePrecision,
                         _dbNumericPrecision, _dbNumericScale);
                     break;
             }

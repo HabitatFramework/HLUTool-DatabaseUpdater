@@ -63,7 +63,7 @@ namespace HLU.UI.ViewModel
         private double _progressScript;
         private double _overallCount;
         private double _scriptCount;
-        private string _dbVersion;
+        private long _dbVersion;
         private bool _processingScripts = false;
         private string[] _scripts;
         private List<string> _sqlCommands = new List<string>();
@@ -171,7 +171,8 @@ namespace HLU.UI.ViewModel
                     _hluDS = new HluDataSet();
                     if (!_db.ContainsDataSet(_hluDS, out errorMessage))
                     {
-                        _dbVersion = Base36.NumberToBase36(0);
+                        // Set the current database version to zero.
+                        _dbVersion = 0;
 
                         // Check if the database contains the old lut_version
                         // table structure.
@@ -306,6 +307,9 @@ namespace HLU.UI.ViewModel
                 // Create a Versions object for the db.
                 _versions = new Versions(_db, _hluDS, _hluTableAdapterMgr);
 
+                // Get the current database version.
+                _dbVersion = _versions.DbVersion;
+
                 return true;
             }
             catch { return false; }
@@ -379,9 +383,33 @@ namespace HLU.UI.ViewModel
         {
             bool scriptCompleted = false;
             string errorMessage;
+            bool transactionStarted = false;
 
             try
             {
+                // Extract the script number from the file path.
+                string scriptName = Path.GetFileName(script);
+                long scriptNum = (int)Base36.Base36ToNumber(Path.GetFileNameWithoutExtension(script));
+
+                // Check the script number is valid.
+                if (scriptNum < 1)
+                    throw new Exception(String.Format("The script name '{0}' is invalid." +
+                        "\n\nUpdate stopped.", scriptName));
+
+                // Check the script is the next in the sequence.
+                long dbVersionNext = _dbVersion + 1;
+                if (scriptNum > dbVersionNext)
+                    throw new Exception(String.Format("One or more database update scripts are missing." +
+                        "\n\nThe next script expected is '{0}.sql'",
+                        Base36.NumberToBase36(dbVersionNext).PadLeft(5,'0')));
+
+                // Check if the script has already been processed.
+                if (scriptNum < (dbVersionNext))
+                {
+                    scriptCompleted = true;
+                    return scriptCompleted;
+                }
+
                 // Read all the lines in the script into an array.
                 string[] lines = File.ReadAllLines(script);
 
@@ -392,7 +420,7 @@ namespace HLU.UI.ViewModel
                 OnPropertyChanged("ShowWhenProcessing");
 
                 // Start a database transaction.
-                _db.BeginTransaction(true, IsolationLevel.ReadCommitted);
+                transactionStarted = _db.BeginTransaction(true, IsolationLevel.ReadCommitted);
 
                 // Process each line in the array.
                 ProgressScript = 0;
@@ -435,17 +463,23 @@ namespace HLU.UI.ViewModel
                     }
                 }
 
-                // Commit the database transaction.
+                // Commit the database transaction and indicate that it has stopped.
                 _db.CommitTransaction();
-
-                // Extract the script number from the file path.
-                string scriptName = Path.GetFileNameWithoutExtension(script);
+                transactionStarted = false;
 
                 // If this was the first ever script then check if the
                 // database now contains the new lut_version table
                 // structure.
-                if ((Base36.Base36ToNumber(scriptName) == 1) && (_hluTableAdapterMgr == null))
+                if ((scriptNum == 1) && (_hluTableAdapterMgr == null))
                 {
+
+                    // Refresh the database connection to reflect the changes
+                    // in the data schema.
+                    if ((_db = DbFactory.RefreshConnection()) == null)
+                        throw new Exception("Database connection lost.");
+
+                    // Check the database now contains the new lut_version
+                    // table structure.
                     if (!_db.ContainsDataSet(_hluDS, out errorMessage))
                     {
                         MessageBox.Show("The database schema is invalid." +
@@ -458,7 +492,7 @@ namespace HLU.UI.ViewModel
                     if (!CreateTableAdapterMgr())
                     {
                         MessageBox.Show("There were errors loading data from the database." +
-                            errorMessage + "\n\nThe database has not been updated correctly.", _displayName,
+                            "\n\nThe database has not been updated correctly.", _displayName,
                             MessageBoxButton.OK, MessageBoxImage.Exclamation);
                         throw new Exception();
                     }
@@ -466,7 +500,7 @@ namespace HLU.UI.ViewModel
 
                 // Update the database version in the lut_version table with the latest
                 // script name.
-                _versions.DbVersion = scriptName;
+                _versions.DbVersion = scriptNum;
 
                 // Indicate that the script completed successfully.
                 scriptCompleted = true;
@@ -476,7 +510,8 @@ namespace HLU.UI.ViewModel
             catch (Exception ex)
             {
                 // Rollback the transaction.
-                _db.RollbackTransaction();
+                if (transactionStarted)
+                    _db.RollbackTransaction();
 
                 MessageBox.Show(ex.Message + "\n\nUpdate stopped.", _displayName,
                     MessageBoxButton.OK, MessageBoxImage.Error);

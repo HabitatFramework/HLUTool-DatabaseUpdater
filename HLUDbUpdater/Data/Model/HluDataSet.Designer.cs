@@ -392,6 +392,13 @@ namespace HLUDbUpdater.Data.Model {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "4.0.0.0")]
+            public lut_versionRow FindByapp_version(string app_version) {
+                return ((lut_versionRow)(this.Rows.Find(new object[] {
+                            app_version})));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "4.0.0.0")]
             public override global::System.Data.DataTable Clone() {
                 lut_versionDataTable cln = ((lut_versionDataTable)(base.Clone()));
                 cln.InitVars();
@@ -421,7 +428,10 @@ namespace HLUDbUpdater.Data.Model {
                 base.Columns.Add(this.columndb_version);
                 this.columnihs_version = new global::System.Data.DataColumn("ihs_version", typeof(string), null, global::System.Data.MappingType.Element);
                 base.Columns.Add(this.columnihs_version);
+                this.Constraints.Add(new global::System.Data.UniqueConstraint("Constraint1", new global::System.Data.DataColumn[] {
+                                this.columnapp_version}, true));
                 this.columnapp_version.AllowDBNull = false;
+                this.columnapp_version.Unique = true;
                 this.columndb_version.AllowDBNull = false;
                 this.columnihs_version.AllowDBNull = false;
             }

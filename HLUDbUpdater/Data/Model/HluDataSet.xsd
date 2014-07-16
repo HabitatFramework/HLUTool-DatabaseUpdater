@@ -72,7 +72,7 @@ SELECT version, created_date, changes FROM lut_version WHERE (version = @version
   <xs:element name="HluDataSet" msdata:IsDataSet="true" msdata:UseCurrentLocale="true" msprop:EnableTableAdapterManager="False" msprop:Generator_DataSetName="HluDataSet" msprop:Generator_UserDSName="HluDataSet">
     <xs:complexType>
       <xs:choice minOccurs="0" maxOccurs="unbounded">
-        <xs:element name="lut_version" msprop:Generator_TableClassName="lut_versionDataTable" msprop:Generator_TableVarName="tablelut_version" msprop:Generator_RowChangedName="lut_versionRowChanged" msprop:Generator_TablePropName="lut_version" msprop:Generator_RowDeletingName="lut_versionRowDeleting" msprop:Generator_RowChangingName="lut_versionRowChanging" msprop:Generator_RowEvHandlerName="lut_versionRowChangeEventHandler" msprop:Generator_RowDeletedName="lut_versionRowDeleted" msprop:Generator_RowClassName="lut_versionRow" msprop:Generator_UserTableName="lut_version" msprop:Generator_RowEvArgName="lut_versionRowChangeEvent">
+        <xs:element name="lut_version" msprop:Generator_TableClassName="lut_versionDataTable" msprop:Generator_TableVarName="tablelut_version" msprop:Generator_TablePropName="lut_version" msprop:Generator_RowDeletingName="lut_versionRowDeleting" msprop:Generator_RowChangingName="lut_versionRowChanging" msprop:Generator_RowEvHandlerName="lut_versionRowChangeEventHandler" msprop:Generator_RowDeletedName="lut_versionRowDeleted" msprop:Generator_UserTableName="lut_version" msprop:Generator_RowChangedName="lut_versionRowChanged" msprop:Generator_RowEvArgName="lut_versionRowChangeEvent" msprop:Generator_RowClassName="lut_versionRow">
           <xs:complexType>
             <xs:sequence>
               <xs:element name="app_version" msprop:Generator_ColumnVarNameInTable="columnapp_version" msprop:Generator_ColumnPropNameInRow="app_version" msprop:Generator_ColumnPropNameInTable="app_versionColumn" msprop:Generator_UserColumnName="app_version" type="xs:string" />
@@ -83,5 +83,9 @@ SELECT version, created_date, changes FROM lut_version WHERE (version = @version
         </xs:element>
       </xs:choice>
     </xs:complexType>
+    <xs:unique name="Constraint1" msdata:PrimaryKey="true">
+      <xs:selector xpath=".//mstns:lut_version" />
+      <xs:field xpath="mstns:app_version" />
+    </xs:unique>
   </xs:element>
 </xs:schema>
