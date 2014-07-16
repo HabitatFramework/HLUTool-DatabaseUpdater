@@ -91,10 +91,19 @@
     <Compile Include="Data\Connection\DbSqlServer.cs" />
     <Compile Include="Data\Connection\OdbcCP32.cs" />
     <Compile Include="Data\Versions.cs" />
+    <Compile Include="Data\Model\HluDataSet.cs">
+      <DependentUpon>HluDataSet.xsd</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Data\Model\HluDataSet.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>HluDataSet.xsd</DependentUpon>
+    </Compile>
+    <Compile Include="Data\Model\HluDataSetOld.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>HluDataSetOld.xsd</DependentUpon>
     </Compile>
     <Compile Include="Data\Model\HluTableAdapters.cs">
       <SubType>Component</SubType>
@@ -174,6 +183,17 @@
     </None>
     <None Include="Data\Model\HluDataSet.xss">
       <DependentUpon>HluDataSet.xsd</DependentUpon>
+    </None>
+    <None Include="Data\Model\HluDataSetOld.xsc">
+      <DependentUpon>HluDataSetOld.xsd</DependentUpon>
+    </None>
+    <None Include="Data\Model\HluDataSetOld.xsd">
+      <SubType>Designer</SubType>
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>HluDataSetOld.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="Data\Model\HluDataSetOld.xss">
+      <DependentUpon>HluDataSetOld.xsd</DependentUpon>
     </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

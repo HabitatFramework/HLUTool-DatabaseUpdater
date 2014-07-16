@@ -175,7 +175,7 @@ namespace HLU.UI.ViewModel
 
                         // Check if the database contains the old lut_version
                         // table structure.
-                        HluDataSet _hluDSOld = new HluDataSet();
+                        HluDataSetOld _hluDSOld = new HluDataSetOld();
                         if (!_db.ContainsDataSet(_hluDSOld, out errorMessage))
                         {
                             if (String.IsNullOrEmpty(errorMessage))
@@ -466,7 +466,7 @@ namespace HLU.UI.ViewModel
 
                 // Update the database version in the lut_version table with the latest
                 // script name.
-                //_versions.DbVersion = scriptName;
+                _versions.DbVersion = scriptName;
 
                 // Indicate that the script completed successfully.
                 scriptCompleted = true;

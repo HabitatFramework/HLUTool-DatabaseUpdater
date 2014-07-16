@@ -63,52 +63,52 @@ namespace HLU.Data
 
         #region Public Properties
 
-        //public string DbVersion
-        //{
-        //    get
-        //    {
-        //        // If the database version has not already been retrieved ...
-        //        if (_dbVersion == null)
-        //        {
-        //            // Fill the lut_version table adapter from the database.
-        //            _hluTableAdapterMgr.Fill(_hluDataset, typeof(HluDataSet.lut_versionDataTable), true);
+        public string DbVersion
+        {
+            get
+            {
+                // If the database version has not already been retrieved ...
+                if (_dbVersion == null)
+                {
+                    // Fill the lut_version table adapter from the database.
+                    _hluTableAdapterMgr.Fill(_hluDataset, typeof(HluDataSet.lut_versionDataTable), true);
 
-        //            // If at least one row was returned ...
-        //            if (_hluDataset.lut_version.Count > 0)
-        //            {
-        //                // Get the first row from the table
-        //                _versionRow =
-        //                    _hluDataset.lut_version[0];
+                    // If at least one row was returned ...
+                    if (_hluDataset.lut_version.Count > 0)
+                    {
+                        // Get the first row from the table
+                        _versionRow =
+                            _hluDataset.lut_version[0];
 
-        //                // Get the value from the dbVersion column.
-        //                string dbVer = _versionRow.db_version;
-        //                if (String.IsNullOrEmpty(dbVer))
-        //                    _dbVersion = Base36.NumberToBase36(0);
-        //                else
-        //                    _dbVersion = dbVer;
-        //            }
-        //            else
-        //            {
-        //                _dbVersion = Base36.NumberToBase36(0);
-        //            }
-        //        }
-        //        return _dbVersion;
-        //    }
-        //    set
-        //    {
-        //        try
-        //        {
-        //            // Store new database version in lut_version table.
-        //            if (_versionRow != null)
-        //                _versionRow.db_version = _dbVersion;
-        //            else
-        //                _versionRow = _hluDataset.lut_version.Addlut_versionRow(string.Empty, _dbVersion, string.Empty);
+                        // Get the value from the dbVersion column.
+                        string dbVer = _versionRow.db_version;
+                        if (String.IsNullOrEmpty(dbVer))
+                            _dbVersion = Base36.NumberToBase36(0);
+                        else
+                            _dbVersion = dbVer;
+                    }
+                    else
+                    {
+                        _dbVersion = Base36.NumberToBase36(0);
+                    }
+                }
+                return _dbVersion;
+            }
+            set
+            {
+                try
+                {
+                    // Store new database version in lut_version table.
+                    if (_versionRow != null)
+                        _versionRow.db_version = _dbVersion;
+                    else
+                        _versionRow = _hluDataset.lut_version.Addlut_versionRow(string.Empty, _dbVersion, string.Empty);
 
-        //            _hluTableAdapterMgr.lut_versionTableAdapter.Update(_versionRow);
-        //        }
-        //        catch {}
-        //    }
-        //}
+                    _hluTableAdapterMgr.lut_versionTableAdapter.Update(_versionRow);
+                }
+                catch {}
+            }
+        }
 
         #endregion
 
