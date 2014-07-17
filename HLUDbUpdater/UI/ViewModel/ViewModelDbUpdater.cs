@@ -24,6 +24,7 @@ using System.Windows.Input;
 using System.IO;
 using System.Reflection;
 using System.Linq;
+using System.Threading;
 using HLU.Data;
 using HLU.Data.Connection;
 using HLUDbUpdater.Data.Model;
@@ -54,23 +55,28 @@ namespace HLU.UI.ViewModel
         private ICommand _okCommand;
         private ICommand _cancelCommand;
         private string _displayName = "HLU Database Updater";
-        private string _messageText;
+        private string _messageText = String.Empty;
         private DbBase _db;
         private HluDataSet _hluDS;
         private TableAdapterManager _hluTableAdapterMgr;
         private Versions _versions;
-        private double _progressOverall;
-        private double _progressScript;
         private double _overallCount;
+        private double _overallProgress;
         private double _scriptCount;
+        private double _scriptProgress;
+        private string _scriptName;
         private long _dbVersion;
         private bool _processingScripts = false;
         private string[] _scripts;
         private List<string> _sqlCommands = new List<string>();
+        private Cursor _windowCursor = Cursors.Arrow;
+        private bool _windowEnabled = true;
 
         #endregion
 
         #region Properties
+
+        #region General properties
 
         public override string DisplayName
         {
@@ -83,6 +89,67 @@ namespace HLU.UI.ViewModel
             get { return DisplayName; }
         }
 
+        public string IntroLabel
+        {
+            get
+            {
+                if (_db == null)
+                    return "The HLU Tool Database Updater Application will update a target\n" +
+                        "database schema and contents by applying any outstanding scripts.";
+                else
+                    return "The HLU Tool Database Updater Application will now update your\n" +
+                        "database schema and contents by applying any outstanding scripts.";
+            }
+        }
+
+        public string ProceedLabel
+        {
+            get
+            {
+                if (_db == null)
+                    return "Click Connect to select your target database ...";
+                else
+                    return " Click Proceed to process the scripts ...";
+            }
+        }
+
+        public string OkButtonText
+        {
+            get
+            {
+                if (_db == null)
+                    return "_Connect";
+                else
+                    return "_Proceed";
+            }
+        }
+
+        public string CancelButtonText
+        {
+            get
+            {
+                if ((_db == null) || (!_processingScripts))
+                    return "_Cancel";
+                else
+                    return "_Close";
+            }
+        }
+
+        public string MessageText
+        {
+            get { return _messageText; }
+            set
+            {
+                _messageText = String.Concat(_messageText, value, "\n");
+                OnPropertyChanged("MessageText");
+                DispatcherHelper.DoEvents();
+            }
+        }
+
+        #endregion
+
+        #region Overall Progress
+
         public double OverallCount
         {
             get { return _overallCount; }
@@ -90,8 +157,30 @@ namespace HLU.UI.ViewModel
             {
                 _overallCount = value;
                 OnPropertyChanged("OverallCount");
+                DispatcherHelper.DoEvents();
             }
         }
+
+        public double OverallProgress
+        {
+            get { return _overallProgress; }
+            private set
+            {
+                _overallProgress = value;
+                OnPropertyChanged("OverallProgress");
+                OnPropertyChanged("OverallProgressLabel");
+                DispatcherHelper.DoEvents();
+            }
+        }
+
+        public string OverallProgressLabel
+        {
+            get { return String.Format(_overallProgress == 0 ? String.Empty : "Processed {0} of {1} scripts", _overallProgress, _overallCount); }
+        }
+
+        #endregion
+
+        #region Script Progress
 
         public double ScriptCount
         {
@@ -100,27 +189,30 @@ namespace HLU.UI.ViewModel
             {
                 _scriptCount = value;
                 OnPropertyChanged("ScriptCount");
+                DispatcherHelper.DoEvents();
             }
         }
 
-        public double ProgressOverall
+        public string ScriptHeaderLabel
         {
-            get { return _progressOverall; }
+            get { return String.Format(_scriptName == null ? String.Empty : "Processing script {0}", _scriptName); }
+        }
+
+        public double ScriptProgress
+        {
+            get { return _scriptProgress; }
             private set
             {
-                _progressOverall = value;
-                OnPropertyChanged("ProgressOverall");
+                _scriptProgress = value;
+                OnPropertyChanged("ScriptProgress");
+                OnPropertyChanged("ScriptProgressLabel");
+                DispatcherHelper.DoEvents();
             }
         }
 
-        public double ProgressScript
+        public string ScriptProgressLabel
         {
-            get { return _progressScript; }
-            private set
-            {
-                _progressScript = value;
-                OnPropertyChanged("ProgressScript");
-            }
+            get { return String.Format(_scriptProgress == 0 ? String.Empty : "Processed {0} of {1} lines", _scriptProgress, _scriptCount); }
         }
 
         public bool HideWhenProcessing
@@ -137,11 +229,11 @@ namespace HLU.UI.ViewModel
 
         #endregion
 
+        #endregion
+
         #region Constructor
 
-        public ViewModelDbUpdater()
-        {
-        }
+        public ViewModelDbUpdater() { }
 
         internal bool Initialize()
         {
@@ -158,57 +250,6 @@ namespace HLU.UI.ViewModel
                     throw new Exception("cancelled");
                 }
 
-                // Open database connection.
-                while (true)
-                {
-                    string errorMessage;
-
-                    if ((_db = DbFactory.CreateConnection()) == null)
-                        throw new Exception("No database connection.");
-
-                    // Check if the database contains the new lut_version
-                    // table structure.
-                    _hluDS = new HluDataSet();
-                    if (!_db.ContainsDataSet(_hluDS, out errorMessage))
-                    {
-                        // Set the current database version to zero.
-                        _dbVersion = 0;
-
-                        // Check if the database contains the old lut_version
-                        // table structure.
-                        HluDataSetOld _hluDSOld = new HluDataSetOld();
-                        if (!_db.ContainsDataSet(_hluDSOld, out errorMessage))
-                        {
-                            if (String.IsNullOrEmpty(errorMessage))
-                            {
-                                errorMessage = String.Empty;
-                            }
-                            if (MessageBox.Show("There were errors loading data from the database." +
-                                errorMessage + "\n\nWould like to connect to another database?", _displayName,
-                                MessageBoxButton.YesNo, MessageBoxImage.Exclamation) == MessageBoxResult.No)
-                                throw new Exception("cancelled");
-                        }
-                        else
-                        {
-                            // The old lut_version table structure was found so the
-                            // new one will be checked for later after the first
-                            // script has been run.
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        // The new lut_version table structure has been found so
-                        // create a table adapter for the database.
-                        if (!CreateTableAdapterMgr())
-                        {
-                            throw new Exception("There were errors loading data from the database." +
-                                "\n\nThe database schema is invalid.");
-                        }
-                        break;
-                    }
-                }
-
                 return true;
             }
             catch (Exception ex)
@@ -216,6 +257,8 @@ namespace HLU.UI.ViewModel
                 if (ex.Message != "cancelled")
                     MessageBox.Show(ex.Message + "\n\nUpdate stopped.", _displayName, 
                         MessageBoxButton.OK, MessageBoxImage.Error);
+
+                // Close the application.
                 App.Current.Shutdown();
                 return false;
             }
@@ -252,8 +295,14 @@ namespace HLU.UI.ViewModel
         /// <remarks></remarks>
         private void OkCommandClick(object param)
         {
-            ProcessScripts();
-            //this.RequestClose();
+            if (_db == null)
+                ConnectDatabase();
+            else
+                ProcessScripts();
+
+            OnPropertyChanged("IntroLabel");
+            OnPropertyChanged("ProceedLabel");
+            DispatcherHelper.DoEvents();
         }
 
         #endregion
@@ -287,12 +336,114 @@ namespace HLU.UI.ViewModel
         /// <remarks></remarks>
         private void CancelCommandClick(object param)
         {
-
+            EventHandler handler = this.RequestClose;
+            if (handler != null)
+            {
+                handler(this, EventArgs.Empty);
+            }
         }
 
         #endregion
 
-        #region Data Adapter
+        #region Cursor
+
+        public Cursor WindowCursor { get { return _windowCursor; } }
+
+        public bool WindowEnabled { get { return _windowEnabled; } }
+
+        public void ChangeCursor(Cursor cursorType)
+        {
+            _windowCursor = cursorType;
+            _windowEnabled = cursorType != Cursors.Wait;
+            OnPropertyChanged("WindowCursor");
+            OnPropertyChanged("WindowEnabled");
+            if (cursorType == Cursors.Wait)
+                DispatcherHelper.DoEvents();
+        }
+
+        #endregion
+
+        #region Data Connection
+
+        private bool ConnectDatabase()
+        {
+            try
+            {
+                // Open database connection.
+                while (true)
+                {
+                    string errorMessage;
+
+                    if ((_db = DbFactory.CreateConnection()) == null)
+                        throw new Exception("No database connection.");
+
+                    ChangeCursor(Cursors.Wait);
+
+                    // Check if the database contains the new lut_version
+                    // table structure.
+                    _hluDS = new HluDataSet();
+                    if (!_db.ContainsDataSet(_hluDS, out errorMessage))
+                    {
+                        // Set the current database version to zero.
+                        _dbVersion = 0;
+
+                        // Check if the database contains the old lut_version
+                        // table structure.
+                        HluDataSetOld _hluDSOld = new HluDataSetOld();
+                        if (!_db.ContainsDataSet(_hluDSOld, out errorMessage))
+                        {
+                            if (String.IsNullOrEmpty(errorMessage))
+                            {
+                                errorMessage = String.Empty;
+                            }
+                            if (MessageBox.Show("There were errors loading data from the database.\n\n" +
+                                errorMessage + "\n\nWould you like to connect to another database?", _displayName,
+                                MessageBoxButton.YesNo, MessageBoxImage.Exclamation) == MessageBoxResult.No)
+                                throw new Exception("cancelled");
+                        }
+                        else
+                        {
+                            // The old lut_version table structure was found so the
+                            // new one will be checked for later after the first
+                            // script has been run.
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        // The new lut_version table structure has been found so
+                        // create a table adapter for the database.
+                        if (!CreateTableAdapterMgr())
+                        {
+                            throw new Exception("There were errors loading data from the database." +
+                                "\n\nThe database schema is invalid.");
+                        }
+                        break;
+                    }
+                }
+
+                // Refresh the Ok button text now were connected.
+                OnPropertyChanged("OkButtonText");
+                DispatcherHelper.DoEvents();
+
+                ChangeCursor(Cursors.Arrow);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ChangeCursor(Cursors.Arrow);
+
+                if (ex.Message != "cancelled")
+                    MessageBox.Show(ex.Message + "\n\nConnection failed.", _displayName,
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+
+                return false;
+            }
+            finally
+            {
+            }
+        }
 
         private bool CreateTableAdapterMgr()
         {
@@ -351,12 +502,16 @@ namespace HLU.UI.ViewModel
 
         internal bool ProcessScripts()
         {
+            // Set the overall progress bar maximum to the
+            // number of scripts to process.
+            OverallCount = _scripts.Length;
+
             // Indicate that the scripts are being processed (which will
             // hide the buttons and show the progress bars.
             _processingScripts = true;
 
-            // Set the overall progress bar maximum.
-            OverallCount = _scripts.Length;
+            // Update the form.
+            OnPropertyChanged("CancelButtonText");
             OnPropertyChanged("HideWhenProcessing");
             OnPropertyChanged("ShowWhenProcessing");
             DispatcherHelper.DoEvents();
@@ -369,11 +524,22 @@ namespace HLU.UI.ViewModel
             // in the file.
             foreach (string script in _scripts)
             {
-                // Check the script is the next in sequence.
-
                 // Execute the script.
                 if (ExecuteScript(script) == false)
+                {
+                    // Add the script name to the message text.
+                    MessageText = String.Format("Error processing script {0} ... processing stopped.", _scriptName);
                     return false;
+                }
+                else
+                {
+                    // Add the script name to the message text.
+                    MessageText = String.Format("Completed processing script {0}", _scriptName);
+                }
+
+                // Increment the overall progress bar to indicate
+                // a script has been processed successfully.
+                OverallProgress += 1;
             }
 
             return true;
@@ -388,13 +554,17 @@ namespace HLU.UI.ViewModel
             try
             {
                 // Extract the script number from the file path.
-                string scriptName = Path.GetFileName(script);
+                _scriptName = Path.GetFileName(script);
                 long scriptNum = (int)Base36.Base36ToNumber(Path.GetFileNameWithoutExtension(script));
+
+                // Refresh the script name in the progress window.
+                OnPropertyChanged("ScriptHeaderLabel");
+                DispatcherHelper.DoEvents();
 
                 // Check the script number is valid.
                 if (scriptNum < 1)
                     throw new Exception(String.Format("The script name '{0}' is invalid." +
-                        "\n\nUpdate stopped.", scriptName));
+                        "\n\nUpdate stopped.", _scriptName));
 
                 // Check the script is the next in the sequence.
                 long dbVersionNext = _dbVersion + 1;
@@ -416,23 +586,15 @@ namespace HLU.UI.ViewModel
                 // Set the script progress bar maximum value to the
                 // number of lines in the script.
                 ScriptCount = lines.Length;
-                OnPropertyChanged("HideWhenProcessing");
-                OnPropertyChanged("ShowWhenProcessing");
+
+                // Process each line in the array.
+                ScriptProgress = 0;
 
                 // Start a database transaction.
                 transactionStarted = _db.BeginTransaction(true, IsolationLevel.ReadCommitted);
 
-                // Process each line in the array.
-                ProgressScript = 0;
-
                 foreach (string line in lines)
                 {
-                    // Increment the progress bar for each line.
-                    ProgressScript += 1;
-                    OnPropertyChanged("HideWhenProcessing");
-                    OnPropertyChanged("ShowWhenProcessing");
-                    DispatcherHelper.DoEvents();
-
                     // Remove any leading or trailing spaces from the line
                     // to store as the sql command.
                     string sqlCmd = line.Trim();
@@ -461,9 +623,14 @@ namespace HLU.UI.ViewModel
                             throw new Exception(String.Format("Failed to execute command\n\n'{0}'.\n\n{1}.",
                                 sqlCmd, errorMessage));
                     }
+
+                    // Increment the progress bar for each line successfully
+                    // executed.
+                    ScriptProgress += 1;
                 }
 
-                // Commit the database transaction and indicate that it has stopped.
+                // Commit the database transaction and indicate that it has
+                // stopped.
                 _db.CommitTransaction();
                 transactionStarted = false;
 
@@ -501,6 +668,7 @@ namespace HLU.UI.ViewModel
                 // Update the database version in the lut_version table with the latest
                 // script name.
                 _versions.DbVersion = scriptNum;
+                _dbVersion = _versions.DbVersion;
 
                 // Indicate that the script completed successfully.
                 scriptCompleted = true;
@@ -520,6 +688,10 @@ namespace HLU.UI.ViewModel
             }
             finally
             {
+                // Add a slight delay so that progress can be followed by
+                // the user.
+                Thread.Sleep(1000);
+
                 // Delete the script file if it was processed successfully.
                 if (scriptCompleted)
                 {
@@ -531,17 +703,7 @@ namespace HLU.UI.ViewModel
 
         #region RequestClose
 
-        public EventHandler RequestClose;
-
-        #endregion
-
-        #region Message
-
-        public string MessageText
-        {
-            get { return _messageText; }
-            set { _messageText = value; }
-        }
+        public event EventHandler RequestClose;
 
         #endregion
     }

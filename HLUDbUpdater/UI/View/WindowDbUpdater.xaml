@@ -4,7 +4,7 @@
         xmlns:hlu="clr-namespace:HLU.UI.UserControls;assembly="
         Title="{Binding Path=WindowTitle}"
         Width="500"
-        Height="Auto"
+        Height="377"
         Focusable="True"
         Icon="..\..\Icons\HLUIcon.png"
         Left="Auto"
@@ -22,82 +22,147 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <StackPanel Margin="8">
-        <Grid Name="GridProgressBars"
-              Height="Auto"
-              VerticalAlignment="Top">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="20" />
-            </Grid.ColumnDefinitions>
+    <DockPanel Margin="8"
+                IsEnabled="{Binding Path=WindowEnabled}"
+                Cursor="{Binding Path=WindowCursor}">
+
+        <Grid Name="GridMain">
             <Grid.RowDefinitions>
-                <RowDefinition Height="10" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="20" />
             </Grid.RowDefinitions>
-            <Label Grid.Row="1" Grid.Column="1">Test</Label>
-            <ProgressBar Name="ProgressBarOverall"
+
+            <Grid Name="GridProgressBars"
+              Grid.Row="0"
+              VerticalAlignment="Center"
+              Visibility="{Binding Path=ShowWhenProcessing,
+                                   Converter={StaticResource bool2VisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="18" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="18" />
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="18" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="18" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Label Name="OverallLabel"
+                   FontWeight="Bold"
+                   Grid.Row="0"
+                   Grid.Column="0">
+                    Processing Scripts
+                </Label>
+                <ProgressBar Name="ProgressBarOverall"
                          Grid.Row="1"
-                         Grid.Column="1"
+                         Grid.Column="0"
                          Height="20"
-                         Margin="0,25,0,10"
+                         Margin="0,5,0,5"
                          Maximum="{Binding OverallCount}"
                          Minimum="0"
-                         Visibility="{Binding Path=ShowWhenProcessing,
-                                              Converter={StaticResource bool2VisibilityConverter}}"
-                         Value="{Binding ProgressOverall,
+                         Value="{Binding OverallProgress,
                                          Mode=OneWay}" />
-            <Label Grid.Row="2" Grid.Column="1">Test</Label>
-            <ProgressBar Name="ProgressBarScript"
-                         Grid.Row="2"
-                         Grid.Column="1"
+                <Label Name="OverallProgressLabel"
+                   FontSize="11"
+                   Grid.Row="2"
+                   Grid.Column="0"
+                   Content="{Binding OverallProgressLabel,
+                                     Mode=OneWay}">
+                </Label>
+                <Label Name="ScriptLabel"
+                   FontWeight="Bold"
+                   Grid.Row="4"
+                   Grid.Column="0"
+                   Content="{Binding ScriptHeaderLabel,
+                                     Mode=OneWay}">
+                </Label>
+                <ProgressBar Name="ProgressBarScript"
+                         Grid.Row="5"
+                         Grid.Column="0"
                          Height="20"
-                         Margin="0,25,0,10"
+                         Margin="0,5,0,5"
                          Maximum="{Binding ScriptCount}"
                          Minimum="0"
-                         Visibility="{Binding Path=ShowWhenProcessing,
-                                              Converter={StaticResource bool2VisibilityConverter}}"
-                         Value="{Binding ProgressScript,
+                         Value="{Binding ScriptProgress,
                                          Mode=OneWay}" />
-        </Grid>
-        <TextBox Name="TextBoxMessage"
+                <Label Name="ScriptProgressLabel"
+                   FontSize="11"
+                   Grid.Row="6"
+                   Grid.Column="0"
+                   Content="{Binding ScriptProgressLabel,
+                                     Mode=OneWay}">
+                </Label>
+                <TextBox Name="TextBoxMessage"
                  Height="150"
+                 Grid.Row="7"
+                 Grid.Column="0"
                  HorizontalScrollBarVisibility="Auto"
                  IsEnabled="True"
+                 IsReadOnly="True"
                  Text="{Binding Path=MessageText,
-                                Mode=OneWay,
-                                UpdateSourceTrigger=PropertyChanged,
-                                ValidatesOnDataErrors=True}"
-                 VerticalScrollBarVisibility="Auto" />
-        <Grid Name="GridButtons"
+                                Mode=TwoWay}"
+                 VerticalScrollBarVisibility="Auto">
+                </TextBox>
+            </Grid>
+
+            <Grid Name="GridIntroduction"
+              Height="Auto"
+              Grid.Row="0"
+              VerticalAlignment="Top"
+              Visibility="{Binding Path=HideWhenProcessing,
+                                   Converter={StaticResource bool2VisibilityConverter}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="250" />
+                    <RowDefinition Height="20" />
+                </Grid.RowDefinitions>
+                <Label Name="IntroLabel"
+                       Margin="20,0,0,0"
+                       Grid.Row="1"
+                       Content="{Binding IntroLabel,
+                                         Mode=OneWay}">
+                </Label>
+                <Label Name="ProceedLabel"
+                       Margin="20,0,0,0"
+                       FontStyle="Italic"
+                       Grid.Row="2"
+                       Content="{Binding ProceedLabel,
+                                         Mode=OneWay}">
+                </Label>
+            </Grid>
+
+            <Grid Name="GridButtons"
+              Grid.Row="1"
               Height="23"
-              Margin="0,4,0,0"
+              Margin="0,8,0,0"
               VerticalAlignment="Bottom">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="82" />
-                <ColumnDefinition Width="82" />
-            </Grid.ColumnDefinitions>
-            <Button Name="ButtonOk"
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="82" />
+                    <ColumnDefinition Width="82" />
+                </Grid.ColumnDefinitions>
+                <Button Name="ButtonOk"
                     Grid.Column="1"
                     Margin="0,0,3,0"
                     Command="{Binding Path=OkCommand}"
                     IsDefault="True"
                     Visibility="{Binding Path=HideWhenProcessing,
-                                         Converter={StaticResource bool2VisibilityConverter}}">
-                _OK
-            </Button>
-            <Button Name="ButtonCancel"
+                                         Converter={StaticResource bool2VisibilityConverter}}"
+                    Content="{Binding OkButtonText,
+                                         Mode=OneWay}">
+                </Button>
+                <Button Name="ButtonCancel"
                     Grid.Column="2"
                     Margin="3,0,0,0"
                     Command="{Binding Path=CancelCommand}"
                     IsCancel="True"
-                    Visibility="{Binding Path=HideWhenProcessing,
-                                         Converter={StaticResource bool2VisibilityConverter}}">
-                _Cancel
-            </Button>
+                    Content="{Binding CancelButtonText,
+                                      Mode=OneWay}">
+                </Button>
+            </Grid>
         </Grid>
-    </StackPanel>
+    </DockPanel>
 </Window>
