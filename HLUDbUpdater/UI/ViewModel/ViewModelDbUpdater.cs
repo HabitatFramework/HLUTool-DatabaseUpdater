@@ -25,6 +25,8 @@ using System.IO;
 using System.Reflection;
 using System.Linq;
 using System.Threading;
+using System.Text.RegularExpressions;
+using System.Text;
 using HLU.Data;
 using HLU.Data.Connection;
 using HLUDbUpdater.Data.Model;
@@ -60,6 +62,7 @@ namespace HLU.UI.ViewModel
         private HluDataSet _hluDS;
         private TableAdapterManager _hluTableAdapterMgr;
         private Versions _versions;
+        private string _scriptsPath;
         private double _overallCount;
         private double _overallProgress;
         private double _scriptCount;
@@ -97,8 +100,11 @@ namespace HLU.UI.ViewModel
                     return "The HLU Tool Database Updater Application will update a target\n" +
                         "database schema and contents by applying any outstanding scripts.";
                 else
-                    return "The HLU Tool Database Updater Application will now update your\n" +
-                        "database schema and contents by applying any outstanding scripts.";
+                    if (!_processingScripts)
+                        return "The HLU Tool Database Updater Application will now update your\n" +
+                            "database schema and contents by applying any outstanding scripts.";
+                    else
+                        return String.Empty;
             }
         }
 
@@ -109,7 +115,10 @@ namespace HLU.UI.ViewModel
                 if (_db == null)
                     return "Click Connect to select your target database ...";
                 else
-                    return " Click Proceed to process the scripts ...";
+                    if (!_processingScripts)
+                        return " Click Proceed to process the scripts ...";
+                    else
+                        return String.Empty;
             }
         }
 
@@ -195,7 +204,7 @@ namespace HLU.UI.ViewModel
 
         public string ScriptHeaderLabel
         {
-            get { return String.Format(_scriptName == null ? String.Empty : "Processing script {0}", _scriptName); }
+            get { return String.Format(String.IsNullOrEmpty(_scriptName) ? String.Empty : "Processing script {0}", _scriptName); }
         }
 
         public double ScriptProgress
@@ -235,6 +244,11 @@ namespace HLU.UI.ViewModel
 
         public ViewModelDbUpdater() { }
 
+        /// <summary>
+        /// Initialize this instance of the view model.
+        /// </summary>
+        /// <returns>True if any scripts to processed were found.</returns>
+        /// <exception cref="System.Exception">cancelled</exception>
         internal bool Initialize()
         {
             try
@@ -351,6 +365,10 @@ namespace HLU.UI.ViewModel
 
         public bool WindowEnabled { get { return _windowEnabled; } }
 
+        /// <summary>
+        /// Changes the cursor type and refreshes the form.
+        /// </summary>
+        /// <param name="cursorType">Type of the cursor.</param>
         public void ChangeCursor(Cursor cursorType)
         {
             _windowCursor = cursorType;
@@ -365,6 +383,19 @@ namespace HLU.UI.ViewModel
 
         #region Data Connection
 
+        /// <summary>
+        /// Prompts the user for the database type and connection details
+        /// and then connects to the database.
+        /// </summary>
+        /// <returns>True if the database is connected and has a valid
+        /// schema.</returns>
+        /// <exception cref="System.Exception">
+        /// No database connection.
+        /// or
+        /// cancelled
+        /// or
+        /// There were errors loading data from the database.
+        /// </exception>
         private bool ConnectDatabase()
         {
             try
@@ -374,10 +405,11 @@ namespace HLU.UI.ViewModel
                 {
                     string errorMessage;
 
+                    // Set the cursor to the Wait type.
+                    ChangeCursor(Cursors.Wait);
+
                     if ((_db = DbFactory.CreateConnection()) == null)
                         throw new Exception("No database connection.");
-
-                    ChangeCursor(Cursors.Wait);
 
                     // Check if the database contains the new lut_version
                     // table structure.
@@ -422,18 +454,18 @@ namespace HLU.UI.ViewModel
                     }
                 }
 
+                // Tell the user the database has been connected.
+                MessageBox.Show("Database connected.", _displayName,
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+
                 // Refresh the Ok button text now were connected.
                 OnPropertyChanged("OkButtonText");
                 DispatcherHelper.DoEvents();
-
-                ChangeCursor(Cursors.Arrow);
 
                 return true;
             }
             catch (Exception ex)
             {
-                ChangeCursor(Cursors.Arrow);
-
                 if (ex.Message != "cancelled")
                     MessageBox.Show(ex.Message + "\n\nConnection failed.", _displayName,
                         MessageBoxButton.OK, MessageBoxImage.Error);
@@ -442,9 +474,15 @@ namespace HLU.UI.ViewModel
             }
             finally
             {
+                // Reset the cursor.
+                ChangeCursor(Cursors.Arrow);
             }
         }
 
+        /// <summary>
+        /// Create a table adapter manager for the current dataset.
+        /// </summary>
+        /// <returns>True if the table adatper manager was created.</returns>
         private bool CreateTableAdapterMgr()
         {
             try
@@ -469,7 +507,7 @@ namespace HLU.UI.ViewModel
 
         #endregion
 
-        #region ProcessScripts
+        #region Process Scripts
 
         /// <summary>
         /// Gets the names of all the scripts in the 'Scripts' sub-folder
@@ -486,10 +524,10 @@ namespace HLU.UI.ViewModel
 
                 // Get the directory of the Scripts sub-folder.
                 string scriptsDirectory = Path.Combine(currentDirectory, "Scripts");
-                string scriptsPath = new Uri(scriptsDirectory).AbsolutePath;
+                _scriptsPath = new Uri(scriptsDirectory).AbsolutePath;
 
                 // Get an array of all the .sql files in the sub-folder.
-                string[] scripts = Directory.GetFiles(scriptsPath, "*.sql").OrderBy(f => f).ToArray();
+                string[] scripts = Directory.GetFiles(_scriptsPath, "*.sql").OrderBy(f => f).ToArray();
 
                 // Return the array.
                 return scripts;
@@ -500,8 +538,15 @@ namespace HLU.UI.ViewModel
             }
         }
 
+        /// <summary>
+        /// Processes the scripts found in the Script sub-directory.
+        /// </summary>
+        /// <returns>True if all the scripts were processed successfully.</returns>
         internal bool ProcessScripts()
         {
+            // Set the cursor.
+            ChangeCursor(Cursors.Wait);
+
             // Set the overall progress bar maximum to the
             // number of scripts to process.
             OverallCount = _scripts.Length;
@@ -520,21 +565,31 @@ namespace HLU.UI.ViewModel
             // with later).
             _sqlCommands = Enum.GetNames(typeof(SqlCommands)).ToList();
 
+            // Create an archive sub-folder (if it doesn't already exist)
+            // for the completed scripts.
+            string archivePath = Path.Combine(_scriptsPath, "Archive");
+            Directory.CreateDirectory(archivePath);
+
             // Loop through each script and execute the sql commands
             // in the file.
             foreach (string script in _scripts)
             {
                 // Execute the script.
-                if (ExecuteScript(script) == false)
+                if (ExecuteScript(script, archivePath) == false)
                 {
-                    // Add the script name to the message text.
-                    MessageText = String.Format("Error processing script {0} ... processing stopped.", _scriptName);
+                    // Reset the cursor.
+                    ChangeCursor(Cursors.Arrow);
+
+                    // Indicate that the scripts are not being processed.
+                    //_processingScripts = false;
+                    //_scriptName = String.Empty;
+
+                    // Update the form.
+                    OnPropertyChanged("HideWhenProcessing");
+                    OnPropertyChanged("ShowWhenProcessing");
+                    DispatcherHelper.DoEvents();
+
                     return false;
-                }
-                else
-                {
-                    // Add the script name to the message text.
-                    MessageText = String.Format("Completed processing script {0}", _scriptName);
                 }
 
                 // Increment the overall progress bar to indicate
@@ -542,46 +597,92 @@ namespace HLU.UI.ViewModel
                 OverallProgress += 1;
             }
 
+            // Reset the cursor.
+            ChangeCursor(Cursors.Arrow);
+
+            // Add the script name to the message text.
+            MessageText = "Database updated.  All scripts have been processed.";
+
+            // Tell the user the database has been updated.
+            MessageBox.Show("Database updated.  All scripts have been processed.", _displayName,
+                MessageBoxButton.OK, MessageBoxImage.Information);
+
             return true;
         }
 
-        internal bool ExecuteScript(string script)
+        /// <summary>
+        /// Executes all the command lines in the given script.
+        /// </summary>
+        /// <param name="scriptFile">The full path and name of the script to execute.</param>
+        /// <param name="archivePath">The full path of the folder where completed
+        /// scripts should be archived to.</param>
+        /// <returns>True if the whole script executed successfully.</returns>
+        /// <exception cref="System.Exception">
+        /// Database connection lost.
+        /// or
+        /// The script name is invalid
+        /// or
+        /// One or more database update scripts are missing
+        /// or
+        /// Failed to execute command
+        /// or
+        /// The database schema is invalid
+        /// or
+        /// There were errors loading data from the database
+        /// </exception>
+        internal bool ExecuteScript(string scriptFile, string archivePath)
         {
             bool scriptCompleted = false;
             string errorMessage;
             bool transactionStarted = false;
 
+            // Add a slight delay so that progress can be followed by
+            // the user.
+            Thread.Sleep(1000);
+
             try
             {
                 // Extract the script number from the file path.
-                _scriptName = Path.GetFileName(script);
-                long scriptNum = (int)Base36.Base36ToNumber(Path.GetFileNameWithoutExtension(script));
+                _scriptName = Path.GetFileName(scriptFile);
+                long scriptNum = (int)Base36.Base36ToNumber(Path.GetFileNameWithoutExtension(scriptFile));
+
+                // Check the script number is valid.
+                if (scriptNum < 1)
+                {
+                    // Add a message to the message text.
+                    MessageText = String.Format("The script name '{0}' is invalid ... update stopped.", _scriptName);
+
+                    throw new Exception(String.Format("The script name '{0}' is invalid.", _scriptName));
+                }
+
+                // Check the script is the next in the sequence.
+                long dbVersionNext = _dbVersion + 1;
+                if (scriptNum > dbVersionNext)
+                {
+                    // Add a message to the message text.
+                    MessageText = "One or more scripts are missing ... update stopped.";
+
+                    throw new Exception(String.Format("One or more database update scripts are missing." +
+                            "\n\nThe next script expected is '{0}.sql'",
+                            Base36.NumberToBase36(dbVersionNext).PadLeft(5, '0')));
+                }
 
                 // Refresh the script name in the progress window.
                 OnPropertyChanged("ScriptHeaderLabel");
                 DispatcherHelper.DoEvents();
 
-                // Check the script number is valid.
-                if (scriptNum < 1)
-                    throw new Exception(String.Format("The script name '{0}' is invalid." +
-                        "\n\nUpdate stopped.", _scriptName));
-
-                // Check the script is the next in the sequence.
-                long dbVersionNext = _dbVersion + 1;
-                if (scriptNum > dbVersionNext)
-                    throw new Exception(String.Format("One or more database update scripts are missing." +
-                        "\n\nThe next script expected is '{0}.sql'",
-                        Base36.NumberToBase36(dbVersionNext).PadLeft(5,'0')));
-
                 // Check if the script has already been processed.
                 if (scriptNum < (dbVersionNext))
                 {
+                    // Add a message to the message text.
+                    MessageText = String.Format("Script {0} already processed ... script skipped.", _scriptName);
+
                     scriptCompleted = true;
                     return scriptCompleted;
                 }
 
                 // Read all the lines in the script into an array.
-                string[] lines = File.ReadAllLines(script);
+                string[] lines = File.ReadAllLines(scriptFile);
 
                 // Set the script progress bar maximum value to the
                 // number of lines in the script.
@@ -615,13 +716,30 @@ namespace HLU.UI.ViewModel
                     if (!_sqlCommands.Any(s => firstWord.ToLower().Contains(s.ToLower())))
                         continue;
 
-                    // Execute the sql command.
-                    if (_db.ExecuteNonQuery(sqlCmd,
+                    // Check if any of the words is a table name (delimited by '<>' characters)
+                    // and if found replace the delimiters with proper qualifiers.
+                    StringBuilder newSqlCmd = new StringBuilder();
+                    foreach (string word in words)
+                    {
+                        Regex r = new Regex(@"(\[[a-z_]+?\])");
+                        if (r.IsMatch(word))
+                            newSqlCmd.Append(_db.QualifyTableName(word) + " ");
+                        else
+                            newSqlCmd.Append(word + " ");
+                    }
+
+                    // Execute the new sql command.
+                    if (_db.ExecuteNonQuery(newSqlCmd.ToString().TrimEnd(),
                         _db.Connection.ConnectionTimeout, CommandType.Text, out errorMessage) == -1)
                     {
                         if (!String.IsNullOrEmpty(errorMessage))
+                        {
+                            // Add a message to the message text.
+                            MessageText = String.Format("Error processing script {0} ... update stopped.", _scriptName);
+
                             throw new Exception(String.Format("Failed to execute command\n\n'{0}'.\n\n{1}.",
                                 sqlCmd, errorMessage));
+                        }
                     }
 
                     // Increment the progress bar for each line successfully
@@ -643,24 +761,33 @@ namespace HLU.UI.ViewModel
                     // Refresh the database connection to reflect the changes
                     // in the data schema.
                     if ((_db = DbFactory.RefreshConnection()) == null)
+                    {
+                        // Add a message to the message text.
+                        MessageText = "Database connection lost ... update stopped.";
+
                         throw new Exception("Database connection lost.");
+                    }
 
                     // Check the database now contains the new lut_version
                     // table structure.
                     if (!_db.ContainsDataSet(_hluDS, out errorMessage))
                     {
-                        MessageBox.Show("The database schema is invalid." +
-                            errorMessage + "\n\nThe database has not been updated correctly.", _displayName,
-                            MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        // Add a message to the message text.
+                        MessageText = "The database schema is invalid ... update stopped.";
+
+                        throw new Exception("The database schema is invalid." +
+                            errorMessage + "\n\nThe database has not been updated correctly.");
                         throw new Exception();
                     }
 
                     // Create a table adapter for the database
                     if (!CreateTableAdapterMgr())
                     {
-                        MessageBox.Show("There were errors loading data from the database." +
-                            "\n\nThe database has not been updated correctly.", _displayName,
-                            MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                        // Add a message to the message text.
+                        MessageText = "Error loading data from the database ... update stopped.";
+
+                        throw new Exception("Error loading data from the database." +
+                            "\n\nThe database has not been updated correctly.");
                         throw new Exception();
                     }
                 }
@@ -669,6 +796,9 @@ namespace HLU.UI.ViewModel
                 // script name.
                 _versions.DbVersion = scriptNum;
                 _dbVersion = _versions.DbVersion;
+
+                // Add the script name to the message text.
+                MessageText = String.Format("Script {0} processing completed.", _scriptName);
 
                 // Indicate that the script completed successfully.
                 scriptCompleted = true;
@@ -681,6 +811,7 @@ namespace HLU.UI.ViewModel
                 if (transactionStarted)
                     _db.RollbackTransaction();
 
+                // Inform the user of the error.
                 MessageBox.Show(ex.Message + "\n\nUpdate stopped.", _displayName,
                     MessageBoxButton.OK, MessageBoxImage.Error);
 
@@ -688,15 +819,81 @@ namespace HLU.UI.ViewModel
             }
             finally
             {
-                // Add a slight delay so that progress can be followed by
-                // the user.
-                Thread.Sleep(1000);
-
-                // Delete the script file if it was processed successfully.
+                // Archive the script file if it was processed successfully.
                 if (scriptCompleted)
                 {
+                    // Archive the script file.
+                    ArchiveScript(scriptFile, archivePath);
                 }
             }
+        }
+
+        #endregion
+
+        #region Archive Script
+
+        /// <summary>
+        /// Archives a given script script file to a given archive path.
+        /// The script file will be renamed if it already exists in the
+        /// destination archive folder.
+        /// </summary>
+        /// <param name="scriptFile">The script file.</param>
+        /// <param name="archivePath">The archive path.</param>
+        /// <returns></returns>
+        private bool ArchiveScript(string scriptFile, string archivePath)
+        {
+            try
+            {
+                // Get a unique file name and path for destination archive
+                // folder.
+                string archiveFile = Path.Combine(archivePath, _scriptName);
+                string uniqueArchiveFile = GetUniqueFilePath(archiveFile);
+
+                // Move the script to the archive folder.
+                File.Move(scriptFile, uniqueArchiveFile);
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Determines a unique file path for a given file path. If the
+        /// given file path already exists it will iterate through alternatives
+        /// until it finds a unique path.
+        /// </summary>
+        /// <param name="filepath">The preferred file path.</param>
+        /// <returns>A string containing a unique file path based on
+        /// the preferred file path.</returns>
+        private string GetUniqueFilePath(string filepath)
+        {
+            if (File.Exists(filepath))
+            {
+                string folder = Path.GetDirectoryName(filepath);
+                string filename = Path.GetFileNameWithoutExtension(filepath);
+                string extension = Path.GetExtension(filepath);
+                int number = 1;
+
+                Match regex = Regex.Match(filepath, @"(.+) \((\d+)\)\.\w+");
+
+                if (regex.Success)
+                {
+                    filename = regex.Groups[1].Value;
+                    number = int.Parse(regex.Groups[2].Value);
+                }
+
+                do
+                {
+                    number++;
+                    filepath = Path.Combine(folder, string.Format("{0} ({1}){2}", filename, number, extension));
+                }
+                while (File.Exists(filepath));
+            }
+
+            return filepath;
         }
 
         #endregion

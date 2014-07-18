@@ -4,7 +4,7 @@
         xmlns:hlu="clr-namespace:HLU.UI.UserControls;assembly="
         Title="{Binding Path=WindowTitle}"
         Width="500"
-        Height="377"
+        Height="390"
         Focusable="True"
         Icon="..\..\Icons\HLUIcon.png"
         Left="Auto"
@@ -23,8 +23,7 @@
     </Window.Resources>
 
     <DockPanel Margin="8"
-                IsEnabled="{Binding Path=WindowEnabled}"
-                Cursor="{Binding Path=WindowCursor}">
+               Cursor="{Binding Path=WindowCursor}">
 
         <Grid Name="GridMain">
             <Grid.RowDefinitions>
@@ -33,10 +32,10 @@
             </Grid.RowDefinitions>
 
             <Grid Name="GridProgressBars"
-              Grid.Row="0"
-              VerticalAlignment="Center"
-              Visibility="{Binding Path=ShowWhenProcessing,
-                                   Converter={StaticResource bool2VisibilityConverter}}">
+                  Grid.Row="0"
+                  VerticalAlignment="Center"
+                  Visibility="{Binding Path=ShowWhenProcessing,
+                                       Converter={StaticResource bool2VisibilityConverter}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
@@ -48,120 +47,114 @@
                     <RowDefinition Height="18" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="18" />
+                    <RowDefinition Height="13" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Label Name="OverallLabel"
-                   FontWeight="Bold"
-                   Grid.Row="0"
-                   Grid.Column="0">
+                       Grid.Row="0"
+                       Grid.Column="0"
+                       FontWeight="Bold">
                     Processing Scripts
                 </Label>
                 <ProgressBar Name="ProgressBarOverall"
-                         Grid.Row="1"
-                         Grid.Column="0"
-                         Height="20"
-                         Margin="0,5,0,5"
-                         Maximum="{Binding OverallCount}"
-                         Minimum="0"
-                         Value="{Binding OverallProgress,
-                                         Mode=OneWay}" />
+                             Grid.Row="1"
+                             Grid.Column="0"
+                             Height="20"
+                             Margin="0,5,0,5"
+                             Maximum="{Binding OverallCount}"
+                             Minimum="0"
+                             Value="{Binding OverallProgress,
+                                             Mode=OneWay}" />
                 <Label Name="OverallProgressLabel"
-                   FontSize="11"
-                   Grid.Row="2"
-                   Grid.Column="0"
-                   Content="{Binding OverallProgressLabel,
-                                     Mode=OneWay}">
-                </Label>
+                       Grid.Row="2"
+                       Grid.Column="0"
+                       Content="{Binding OverallProgressLabel,
+                                         Mode=OneWay}"
+                       FontSize="11" />
                 <Label Name="ScriptLabel"
-                   FontWeight="Bold"
-                   Grid.Row="4"
-                   Grid.Column="0"
-                   Content="{Binding ScriptHeaderLabel,
-                                     Mode=OneWay}">
-                </Label>
+                       Grid.Row="4"
+                       Grid.Column="0"
+                       Content="{Binding ScriptHeaderLabel,
+                                         Mode=OneWay}"
+                       FontWeight="Bold" />
                 <ProgressBar Name="ProgressBarScript"
-                         Grid.Row="5"
-                         Grid.Column="0"
-                         Height="20"
-                         Margin="0,5,0,5"
-                         Maximum="{Binding ScriptCount}"
-                         Minimum="0"
-                         Value="{Binding ScriptProgress,
-                                         Mode=OneWay}" />
+                             Grid.Row="5"
+                             Grid.Column="0"
+                             Height="20"
+                             Margin="0,5,0,5"
+                             Maximum="{Binding ScriptCount}"
+                             Minimum="0"
+                             Value="{Binding ScriptProgress,
+                                             Mode=OneWay}" />
                 <Label Name="ScriptProgressLabel"
-                   FontSize="11"
-                   Grid.Row="6"
-                   Grid.Column="0"
-                   Content="{Binding ScriptProgressLabel,
-                                     Mode=OneWay}">
-                </Label>
+                       Grid.Row="6"
+                       Grid.Column="0"
+                       Content="{Binding ScriptProgressLabel,
+                                         Mode=OneWay}"
+                       FontSize="11" />
                 <TextBox Name="TextBoxMessage"
-                 Height="150"
-                 Grid.Row="7"
-                 Grid.Column="0"
-                 HorizontalScrollBarVisibility="Auto"
-                 IsEnabled="True"
-                 IsReadOnly="True"
-                 Text="{Binding Path=MessageText,
-                                Mode=TwoWay}"
-                 VerticalScrollBarVisibility="Auto">
-                </TextBox>
+                         Grid.Row="8"
+                         Grid.Column="0"
+                         Height="150"
+                         HorizontalScrollBarVisibility="Auto"
+                         IsEnabled="True"
+                         IsReadOnly="True"
+                         Text="{Binding Path=MessageText,
+                                        Mode=TwoWay}"
+                         VerticalScrollBarVisibility="Auto" />
             </Grid>
 
             <Grid Name="GridIntroduction"
-              Height="Auto"
-              Grid.Row="0"
-              VerticalAlignment="Top"
-              Visibility="{Binding Path=HideWhenProcessing,
-                                   Converter={StaticResource bool2VisibilityConverter}}">
+                  Grid.Row="0"
+                  Height="Auto"
+                  VerticalAlignment="Top"
+                  Visibility="{Binding Path=HideWhenProcessing,
+                                       Converter={StaticResource bool2VisibilityConverter}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="20" />
                     <RowDefinition Height="250" />
                     <RowDefinition Height="20" />
                 </Grid.RowDefinitions>
                 <Label Name="IntroLabel"
-                       Margin="20,0,0,0"
                        Grid.Row="1"
-                       Content="{Binding IntroLabel,
-                                         Mode=OneWay}">
-                </Label>
-                <Label Name="ProceedLabel"
                        Margin="20,0,0,0"
-                       FontStyle="Italic"
+                       Content="{Binding IntroLabel,
+                                         Mode=OneWay}" />
+                <Label Name="ProceedLabel"
                        Grid.Row="2"
+                       Margin="20,0,0,0"
                        Content="{Binding ProceedLabel,
-                                         Mode=OneWay}">
-                </Label>
+                                         Mode=OneWay}"
+                       FontStyle="Italic" />
             </Grid>
 
             <Grid Name="GridButtons"
-              Grid.Row="1"
-              Height="23"
-              Margin="0,8,0,0"
-              VerticalAlignment="Bottom">
+                  Grid.Row="1"
+                  Height="23"
+                  IsEnabled="{Binding Path=WindowEnabled}"
+                  Margin="0,8,0,0"
+                  VerticalAlignment="Bottom">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="82" />
                     <ColumnDefinition Width="82" />
                 </Grid.ColumnDefinitions>
                 <Button Name="ButtonOk"
-                    Grid.Column="1"
-                    Margin="0,0,3,0"
-                    Command="{Binding Path=OkCommand}"
-                    IsDefault="True"
-                    Visibility="{Binding Path=HideWhenProcessing,
-                                         Converter={StaticResource bool2VisibilityConverter}}"
-                    Content="{Binding OkButtonText,
-                                         Mode=OneWay}">
-                </Button>
+                        Grid.Column="1"
+                        Margin="0,0,3,0"
+                        Command="{Binding Path=OkCommand}"
+                        Content="{Binding OkButtonText,
+                                          Mode=OneWay}"
+                        IsDefault="True"
+                        Visibility="{Binding Path=HideWhenProcessing,
+                                             Converter={StaticResource bool2VisibilityConverter}}" />
                 <Button Name="ButtonCancel"
-                    Grid.Column="2"
-                    Margin="3,0,0,0"
-                    Command="{Binding Path=CancelCommand}"
-                    IsCancel="True"
-                    Content="{Binding CancelButtonText,
-                                      Mode=OneWay}">
-                </Button>
+                        Grid.Column="2"
+                        Margin="3,0,0,0"
+                        Command="{Binding Path=CancelCommand}"
+                        Content="{Binding CancelButtonText,
+                                          Mode=OneWay}"
+                        IsCancel="True" />
             </Grid>
         </Grid>
     </DockPanel>
