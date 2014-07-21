@@ -47,6 +47,7 @@ namespace HLU.UI.ViewModel
             Insert,
             Update,
             Delete,
+            Set,
             Go
         }
 
@@ -635,6 +636,7 @@ namespace HLU.UI.ViewModel
             bool scriptCompleted = false;
             string errorMessage;
             bool transactionStarted = false;
+            bool ignoreErrors = false;
 
             // Add a slight delay so that progress can be followed by
             // the user.
@@ -694,6 +696,7 @@ namespace HLU.UI.ViewModel
                 // Start a database transaction.
                 transactionStarted = _db.BeginTransaction(true, IsolationLevel.ReadCommitted);
 
+                // Process each line in the script.
                 foreach (string line in lines)
                 {
                     // Remove any leading or trailing spaces from the line
@@ -716,6 +719,20 @@ namespace HLU.UI.ViewModel
                     if (!_sqlCommands.Any(s => firstWord.ToLower().Contains(s.ToLower())))
                         continue;
 
+                    // Handle any set commands.
+                    if (words.Length == 3)
+                    {
+                        switch (words[1].ToLower())
+                        {
+                            case "ignore_errors":
+                                if (words[2].ToLower() == "on")
+                                    ignoreErrors = true;
+                                else if (words[2].ToLower() == "of")
+                                    ignoreErrors = false;
+                                break;
+                        }
+                    }
+
                     // Check if any of the words is a table name (delimited by '<>' characters)
                     // and if found replace the delimiters with proper qualifiers.
                     StringBuilder newSqlCmd = new StringBuilder();
@@ -732,7 +749,7 @@ namespace HLU.UI.ViewModel
                     if (_db.ExecuteNonQuery(newSqlCmd.ToString().TrimEnd(),
                         _db.Connection.ConnectionTimeout, CommandType.Text, out errorMessage) == -1)
                     {
-                        if (!String.IsNullOrEmpty(errorMessage))
+                        if ((!ignoreErrors) && (!String.IsNullOrEmpty(errorMessage)))
                         {
                             // Add a message to the message text.
                             MessageText = String.Format("Error processing script {0} ... update stopped.", _scriptName);
