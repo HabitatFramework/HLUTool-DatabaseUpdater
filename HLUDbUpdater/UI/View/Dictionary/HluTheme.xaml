@@ -2613,6 +2613,28 @@
         </Setter>
     </Style>  -->
 
+    <Color x:Key="ShadeBlueGradient1">#FFAAAAAA</Color>
+    <Color x:Key="ShadeBlueGradient2">#FFDDDDDD</Color>
+    <Color x:Key="ShadeBlueGradient3">#FFFFFFFF</Color>
+
+    <LinearGradientBrush x:Key="ShadeBlue" EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="{StaticResource ShadeBlueGradient1}" Offset="0" />
+        <GradientStop Color="{StaticResource ShadeBlueGradient2}" Offset="0.1" />
+        <GradientStop Color="{StaticResource ShadeBlueGradient3}" Offset="1" />
+    </LinearGradientBrush>
+
+    <Color x:Key="NormalBlueGradient1">#FFBAE4FF</Color>
+    <Color x:Key="NormalBlueGradient2">#FF398FDF</Color>
+    <Color x:Key="NormalBlueGradient3">#FF006DD4</Color>
+    <Color x:Key="NormalBlueGradient4">#FF0A3E69</Color>
+
+    <LinearGradientBrush x:Key="NormalBlue" EndPoint="0.5,1" StartPoint="0.5,0">
+        <GradientStop Color="{StaticResource NormalBlueGradient1}" Offset="0" />
+        <GradientStop Color="{StaticResource NormalBlueGradient2}" Offset="0.41800001263618469" />
+        <GradientStop Color="{StaticResource NormalBlueGradient3}" Offset="0.418" />
+        <GradientStop Color="{StaticResource NormalBlueGradient4}" Offset="1" />
+    </LinearGradientBrush>
+
     <Style TargetType="{x:Type ProgressBar}">
         <Setter Property="Template">
             <Setter.Value>
@@ -2630,9 +2652,10 @@
                     </ControlTemplate.Resources>
                     <Grid>
 
-                        <Border x:Name="PART_Track" Background="{DynamicResource ShadeBrush}" BorderBrush="{DynamicResource DisabledBackgroundBrush}" BorderThickness="2,2,2,2" CornerRadius="6,6,6,6"/>
+                        <Border x:Name="PART_Track" Background="{DynamicResource ShadeBlue}" BorderBrush="{DynamicResource SolidBorderBrush}" BorderThickness="1,1,1,1" CornerRadius="6,6,6,6"/>
 
-                        <Border HorizontalAlignment="Left" x:Name="PART_Indicator" Background="{DynamicResource NormalBrush}" BorderBrush="{x:Null}" BorderThickness="1" CornerRadius="7,7,7,7"/>
+                        <Border HorizontalAlignment="Left" x:Name="PART_Indicator" Background="{DynamicResource NormalBlue}" BorderBrush="{x:Null}" BorderThickness="1" CornerRadius="7,7,7,7"/>
+                        
                         <Grid x:Name="IndeterminateRoot" Visibility="Collapsed">
                             <Rectangle Margin="1,1,1,1"	x:Name="IndeterminateGradientFill" Opacity="0.7" RadiusX="5" RadiusY="5" StrokeThickness="0">
                                 <Rectangle.Fill>
