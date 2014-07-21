@@ -47,8 +47,7 @@ namespace HLU.UI.ViewModel
             Insert,
             Update,
             Delete,
-            Set,
-            Go
+            Set
         }
 
         #endregion
@@ -376,8 +375,8 @@ namespace HLU.UI.ViewModel
             _windowEnabled = cursorType != Cursors.Wait;
             OnPropertyChanged("WindowCursor");
             OnPropertyChanged("WindowEnabled");
-            if (cursorType == Cursors.Wait)
-                DispatcherHelper.DoEvents();
+            //if (cursorType == Cursors.Wait)
+            //    DispatcherHelper.DoEvents();
         }
 
         #endregion
@@ -637,6 +636,7 @@ namespace HLU.UI.ViewModel
             string errorMessage;
             bool transactionStarted = false;
             bool ignoreErrors = false;
+            String connTypes = String.Empty;
 
             // Add a slight delay so that progress can be followed by
             // the user.
@@ -705,48 +705,86 @@ namespace HLU.UI.ViewModel
 
                     // Skip the line if it is empty.
                     if ((sqlCmd.Length == 0) || (string.IsNullOrEmpty(sqlCmd)))
+                    {
+                        // Increment the progress bar.
+                        ScriptProgress += 1;
                         continue;
+                    }
 
                     // Break the sql command into words.
                     string[] words = sqlCmd.Split(' ');
 
                     // If there are no words then skip to the next line.
                     if (words.Length == 0)
+                    {
+                        // Increment the progress bar.
+                        ScriptProgress += 1;
                         continue;
+                    }
+
+                    // Handle any specific connnection types.
+                    if ((sqlCmd.TrimStart().StartsWith("[")) &&
+                        (sqlCmd.TrimEnd().EndsWith("]")))
+                    {
+                        connTypes = sqlCmd.TrimStart(new Char[] { '[', ' ' }).TrimEnd(new Char[] { ']', ' ' });
+
+                        // Increment the progress bar.
+                        ScriptProgress += 1;
+                        continue;
+                    }
 
                     // Check if the first word is one of the valid sql commands.
                     string firstWord = words[0];
                     if (!_sqlCommands.Any(s => firstWord.ToLower().Contains(s.ToLower())))
+                    {
+                        // Increment the progress bar.
+                        ScriptProgress += 1;
                         continue;
+                    }
 
-                    // Handle any set commands.
-                    if (words.Length == 3)
+                    // Handle any special set commands.
+                    bool specialSet = false;
+                    if ((words.Length == 3) && (words[0].ToLower() == "set"))
                     {
                         switch (words[1].ToLower())
                         {
                             case "ignore_errors":
                                 if (words[2].ToLower() == "on")
                                     ignoreErrors = true;
-                                else if (words[2].ToLower() == "of")
+                                else if (words[2].ToLower() == "off")
                                     ignoreErrors = false;
+
+                                specialSet = true;
+
                                 break;
+                        }
+
+                        // If a special set command was found don't execute the sql command.
+                        if (specialSet)
+                        {
+                            // Increment the progress bar.
+                            ScriptProgress += 1;
+                            continue;
                         }
                     }
 
-                    // Check if any of the words is a table name (delimited by '<>' characters)
-                    // and if found replace the delimiters with proper qualifiers.
-                    StringBuilder newSqlCmd = new StringBuilder();
-                    foreach (string word in words)
+                    // If a sub-set of connection types is active but the current
+                    // connection type or backend is not in the list then skip
+                    // the sql command.
+                    if ((!String.IsNullOrEmpty(connTypes)) &&
+                        (!connTypes.ToLower().Contains(DbFactory.ConnectionType.ToString().ToLower())) &&
+                        (!connTypes.ToLower().Contains(DbFactory.Backend.ToString().ToLower())))
                     {
-                        Regex r = new Regex(@"(\[[a-z_]+?\])");
-                        if (r.IsMatch(word))
-                            newSqlCmd.Append(_db.QualifyTableName(word) + " ");
-                        else
-                            newSqlCmd.Append(word + " ");
+                        // Increment the progress bar.
+                        ScriptProgress += 1;
+                        continue;
                     }
 
+                    // Replace any connection type specific qualifiers and delimeters.
+                    String newSqlCmd = ReplaceStringQualifiers(sqlCmd);
+
                     // Execute the new sql command.
-                    if (_db.ExecuteNonQuery(newSqlCmd.ToString().TrimEnd(),
+                    if (_db.ExecuteNonQuery(newSqlCmd,
                         _db.Connection.ConnectionTimeout, CommandType.Text, out errorMessage) == -1)
                     {
                         if ((!ignoreErrors) && (!String.IsNullOrEmpty(errorMessage)))
@@ -759,8 +797,7 @@ namespace HLU.UI.ViewModel
                         }
                     }
 
-                    // Increment the progress bar for each line successfully
-                    // executed.
+                    // Increment the progress bar for each line processed.
                     ScriptProgress += 1;
                 }
 
@@ -843,6 +880,175 @@ namespace HLU.UI.ViewModel
                     ArchiveScript(scriptFile, archivePath);
                 }
             }
+        }
+
+        #endregion
+
+        #region SQLUpdater
+
+        /// <summary>
+        /// Replaces any string or date delimeters with connection type specific
+        /// versions and qualifies any table names.
+        /// </summary>
+        /// <param name="words">The words.</param>
+        /// <returns></returns>
+        internal String ReplaceStringQualifiers(String sqlcmd)
+        {
+            // Check if a table name (delimited by '[]' characters) is found
+            // in the sql command.
+            int i1 = 0;
+            int i2 = 0;
+            String start = String.Empty;
+            String end = String.Empty;
+
+            while ((i1 != -1) && (i2 != -1))
+            {
+                i1 = sqlcmd.IndexOf("[", i2);
+                if (i1 != -1)
+                {
+                    i2 = sqlcmd.IndexOf("]", i1 + 1);
+                    if (i2 != -1)
+                    {
+                        // Strip out the table name.
+                        string table = sqlcmd.Substring(i1 + 1, i2 - i1 -1);
+
+                        // Split the table name from the rest of the sql command.
+                        if (i1 == 0)
+                            start = String.Empty;
+                        else
+                            start = sqlcmd.Substring(0, i1);
+
+                        if (i2 == sqlcmd.Length - 1)
+                            end = String.Empty;
+                        else
+                            end = sqlcmd.Substring(i2 + 1);
+
+                        // Replace the table name with a qualified table name.
+                        sqlcmd = start + _db.QualifyTableName(table) + end;
+
+                        // Reposition the last index.
+                        i2 = sqlcmd.Length - end.Length;
+                    }
+                }
+            }
+
+            // Check if any date strings are found (delimited by single quotes)
+            // in the sql command.
+            i1 = 0;
+            i2 = 0;
+
+            while ((i1 != -1) && (i2 != -1))
+            {
+                i1 = sqlcmd.IndexOf("'", i2);
+                if (i1 != -1)
+                {
+                    i2 = sqlcmd.IndexOf("'", i1 + 1);
+                    if (i2 != -1)
+                    {
+                        // Strip out the text string.
+                        string text = sqlcmd.Substring(i1 + 1, i2 - i1 -1);
+
+                        // Split the text string from the rest of the sql command.
+                        if (i1 == 0)
+                            start = String.Empty;
+                        else
+                            start = sqlcmd.Substring(0, i1);
+
+                        if (i2 == sqlcmd.Length - 1)
+                            end = String.Empty;
+                        else
+                            end = sqlcmd.Substring(i2 + 1);
+
+                        // Replace any wild characters found in the text.
+                        if (start.TrimEnd().EndsWith(" LIKE"))
+                        {
+                            text.Replace("_", _db.WildcardSingleMatch);
+                            text.Replace("%", _db.WildcardManyMatch);
+                        }
+
+                        // Replace the text delimiters with the correct delimiters.
+                        sqlcmd = start + _db.QuoteValue(text) + end;
+
+                        // Reposition the last index.
+                        i2 = sqlcmd.Length - end.Length;
+                    }
+                }
+            }
+
+            // Check if any date strings are found (delimited by '#' characters)
+            // in the sql command.
+            i1 = 0;
+            i2 = 0;
+
+            while ((i1 != -1) && (i2 != -1))
+            {
+                i1 = sqlcmd.IndexOf("#", i2);
+                if (i1 != -1)
+                {
+                    i2 = sqlcmd.IndexOf("#", i1 + 1);
+                    if (i2 != -1)
+                    {
+                        // Strip out the date string.
+                        DateTime dt;
+                        DateTime.TryParse(sqlcmd.Substring(i1 + 1, i2 - i1 - 1), out dt);
+
+                        // Split the date string from the rest of the sql command.
+                        if (i1 == 0)
+                            start = String.Empty;
+                        else
+                            start = sqlcmd.Substring(0, i1);
+
+                        if (i2 == sqlcmd.Length - 1)
+                            end = String.Empty;
+                        else
+                            end = sqlcmd.Substring(i2 + 1);
+
+                        // Replace the date delimiters with the correct delimiters.
+                        sqlcmd = start + _db.QuoteValue(dt) + end;
+
+                        // Reposition the last index.
+                        i2 = sqlcmd.Length - end.Length;
+                    }
+                }
+            }
+            return sqlcmd;
+
+
+
+
+            //StringBuilder newSqlCmd = new StringBuilder();
+
+            //Regex regTable = new Regex(@"(\[[A-Za-z_]+?\])");
+            //Regex regQuote = new Regex(@"(\'[a-z0-9\-]+?\')");
+
+
+
+            //Match matchTable = regTable.Match(words.ToString());
+
+            //while (matchTable.Success)
+            //{
+            //    matchTable.Index
+            //}
+
+
+            //foreach (string word in words)
+            //{
+            //    if (regTable.IsMatch(word))
+            //    {
+            //        string table = word.Trim(new char[] { '[', ']' });
+            //        newSqlCmd.Append(_db.QualifyTableName(table) + " ");
+            //    }
+            //    else if (regQuote.IsMatch(word))
+            //    {
+            //        string quote = word.Trim(new char[] { '\'', '\'' });
+            //        newSqlCmd.Append(_db.QuoteValue(quote) + " ");
+            //    }
+            //    else
+            //        newSqlCmd.Append(word + " ");
+            //}
+
+            //// Return the new command string
+            //return newSqlCmd.ToString().TrimEnd();
         }
 
         #endregion

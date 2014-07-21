@@ -29,15 +29,23 @@ namespace HLU.Data.Connection
         private static ViewSelectConnection _selConnWindow;
         private static ViewModelSelectConnection _selConnViewModel;
         private static ConnectionTypes _connType;
+        private static Backends _backend;
         private static string _connString;
         private static string _defaultSchema;
         private static bool _promptPwd;
 
+        public static ConnectionTypes ConnectionType
+        {
+            get { return _connType; }
+        }
+
+        public static Backends Backend
+        {
+            get { return _backend; }
+        }
+
         public static DbBase CreateConnection()
         {
-            //if (Enum.IsDefined(typeof(ConnectionTypes), Settings.Default.DbConnectionType))
-            //    _connType = (ConnectionTypes)Settings.Default.DbConnectionType;
-            //else
             _connType = ConnectionTypes.Unknown;
 
             string connString = String.Empty;
@@ -104,6 +112,7 @@ namespace HLU.Data.Connection
             }
 
             _connString = connString;
+            _backend = DbBase.GetBackend(connString, _connType);
             _defaultSchema = defaultSchema;
             _promptPwd = promptPwd;
 

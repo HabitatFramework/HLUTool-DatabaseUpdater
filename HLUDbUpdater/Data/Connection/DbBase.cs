@@ -191,7 +191,7 @@ namespace HLU.Data.Connection
                 if (integratedSecurity is String)
                 {
                     string s = integratedSecurity.ToString().ToLower();
-                    return s == "true" || s == "yes" || s == "SSPI";
+                    return s == "true" || s == "yes" || s == "sspi";
                 }
                 else if (integratedSecurity is bool)
                 {
