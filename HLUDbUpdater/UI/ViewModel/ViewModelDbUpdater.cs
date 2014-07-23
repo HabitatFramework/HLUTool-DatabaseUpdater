@@ -722,11 +722,16 @@ namespace HLU.UI.ViewModel
                         continue;
                     }
 
-                    // Handle any specific connnection types.
+                    // Handle any specific connection types directives.
                     if ((sqlCmd.TrimStart().StartsWith("[")) &&
                         (sqlCmd.TrimEnd().EndsWith("]")))
                     {
                         connTypes = sqlCmd.TrimStart(new Char[] { '[', ' ' }).TrimEnd(new Char[] { ']', ' ' });
+
+                        // Allow 'All' or 'Any' connection types to explicity clear
+                        // an existing specific connection type directives.
+                        if ((connTypes.ToLower() == "all") || (connTypes.ToLower() == "any"))
+                            connTypes = String.Empty;
 
                         // Increment the progress bar.
                         ScriptProgress += 1;
@@ -768,7 +773,7 @@ namespace HLU.UI.ViewModel
                         }
                     }
 
-                    // If a sub-set of connection types is active but the current
+                    // If a connection type directive is active but the current
                     // connection type or backend is not in the list then skip
                     // the sql command.
                     if ((!String.IsNullOrEmpty(connTypes)) &&
