@@ -728,7 +728,9 @@ namespace HLU.Data.Connection
                 _connWindow.Topmost = true;
 
                 // show window
+                System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.WaitCursor;
                 _connWindow.ShowDialog();
+                System.Windows.Forms.Cursor.Current = System.Windows.Forms.Cursors.Arrow;
 
                 // throw error if connection failed
                 if (!String.IsNullOrEmpty(_errorMessage)) throw (new Exception(_errorMessage));

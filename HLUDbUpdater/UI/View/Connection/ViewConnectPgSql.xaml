@@ -7,14 +7,14 @@
         ShowInTaskbar="False" ResizeMode="NoResize" Background="{DynamicResource WindowBackgroundBrush}" 
         Icon="..\..\..\Icons\HLUIcon.png" Activated="Window_Activated">
 
-    <Window.Resources>
+<!--    <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="..\Dictionary\WindowDictionary.xaml" />
                 <ResourceDictionary Source="..\Dictionary\HluTheme.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </Window.Resources>
+    </Window.Resources>  -->
 
     <StackPanel Name="StackPanelMain" Margin="4">
         <GroupBox Name="GroupBoxHost" Header="Host" Margin="0,4,0,0" Padding="0">

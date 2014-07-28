@@ -375,8 +375,8 @@ namespace HLU.UI.ViewModel
             _windowEnabled = cursorType != Cursors.Wait;
             OnPropertyChanged("WindowCursor");
             OnPropertyChanged("WindowEnabled");
-            //if (cursorType == Cursors.Wait)
-            //    DispatcherHelper.DoEvents();
+            if (cursorType == Cursors.Wait)
+                DispatcherHelper.DoEvents();
         }
 
         #endregion
