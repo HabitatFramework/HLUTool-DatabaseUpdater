@@ -56,7 +56,7 @@ namespace HLU.UI.ViewModel
 
         private ICommand _okCommand;
         private ICommand _cancelCommand;
-        private string _displayName = "HLU Database Updater";
+        private string _displayName = "HLU Database Updater v1.0.0";
         private string _messageText = String.Empty;
         private DbBase _db;
         private HluDataSet _hluDS;
