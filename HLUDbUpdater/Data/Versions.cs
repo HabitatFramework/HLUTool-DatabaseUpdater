@@ -34,7 +34,9 @@ namespace HLU.Data
         HluDataSet _hluDataset;
         TableAdapterManager _hluTableAdapterMgr;
         HluDataSet.lut_versionRow _versionRow = null;
+        private string _appversion = null;
         private long _dbVersion = -1;
+        private string _ihsversion = null;
 
         #endregion
 
@@ -55,8 +57,33 @@ namespace HLU.Data
                     _hluTableAdapterMgr.lut_versionTableAdapter =
                         new HluTableAdapter<HluDataSet.lut_versionDataTable, HluDataSet.lut_versionRow>(_db);
                 _hluTableAdapterMgr.Fill(_hluDataset,
-                    new Type[] { typeof(HluDataSet.lut_versionDataTable) }, false);
+                    new Type[] { typeof(HluDataSet.lut_versionDataTable) }, true);
             }
+
+            // If at least one row was returned ...
+            if (_hluDataset.lut_version.Count > 0)
+            {
+                // Get the first row from the table
+                _versionRow =
+                    _hluDataset.lut_version[0];
+
+                // Get the values from the row.
+                string dbVer = _versionRow.db_version;
+                if (String.IsNullOrEmpty(dbVer))
+                    _dbVersion = 0;
+                else
+                    _dbVersion = Base36.Base36ToNumber(dbVer);
+
+                _appversion = _versionRow.app_version;
+                _ihsversion = _versionRow.ihs_version;
+            }
+            else
+            {
+                _dbVersion = 0;
+                _appversion = null;
+                _ihsversion = null;
+            }
+
         }
 
         #endregion
@@ -67,31 +94,6 @@ namespace HLU.Data
         {
             get
             {
-                // If the database version has not already been retrieved ...
-                if (_dbVersion == -1)
-                {
-                    // Fill the lut_version table adapter from the database.
-                    _hluTableAdapterMgr.Fill(_hluDataset, typeof(HluDataSet.lut_versionDataTable), true);
-
-                    // If at least one row was returned ...
-                    if (_hluDataset.lut_version.Count > 0)
-                    {
-                        // Get the first row from the table
-                        _versionRow =
-                            _hluDataset.lut_version[0];
-
-                        // Get the value from the dbVersion column.
-                        string dbVer = _versionRow.db_version;
-                        if (String.IsNullOrEmpty(dbVer))
-                            _dbVersion = 0;
-                        else
-                            _dbVersion = Base36.Base36ToNumber(dbVer);
-                    }
-                    else
-                    {
-                        _dbVersion = 0;
-                    }
-                }
                 return _dbVersion;
             }
             set

@@ -850,6 +850,15 @@ namespace HLU.UI.ViewModel
                         throw new Exception();
                     }
                 }
+                else
+                {
+                    // Refill the lut_version table adapter from the database
+                    // (in case it has been changed within the script).
+                    _hluTableAdapterMgr.Fill(_hluDS, typeof(HluDataSet.lut_versionDataTable), true);
+
+                    // Create a new Versions object for the db.
+                    _versions = new Versions(_db, _hluDS, _hluTableAdapterMgr);
+                }
 
                 // Update the database version in the lut_version table with the latest
                 // script name.
