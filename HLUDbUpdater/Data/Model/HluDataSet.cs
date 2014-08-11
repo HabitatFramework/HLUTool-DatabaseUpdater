@@ -1,5 +1,5 @@
 ﻿// HLUTool is used to view and maintain habitat and land use GIS data.
-// Copyright © 2013 Andy Foy
+// Copyright © 2014 Sussex Biodiversity Record Centre
 // 
 // This file is part of HLUTool.
 // 
@@ -21,13 +21,5 @@ namespace HLUDbUpdater.Data.Model
 
     public partial class HluDataSet
     {
-    }
-}
-
-namespace HLUDbUpdater.Data.Model.HluDataSetTableAdapters
-{
-    
-    
-    public partial class lut_versionTableAdapter {
     }
 }

@@ -1,4 +1,22 @@
-﻿using System;
+﻿// HLUTool is used to view and maintain habitat and land use GIS data.
+// Copyright © 2014 Sussex Biodiversity Record Centre
+// 
+// This file is part of HLUTool.
+// 
+// HLUTool is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// HLUTool is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License
+// along with HLUTool.  If not, see <http://www.gnu.org/licenses/>.
+
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -96,27 +114,8 @@ namespace HLU
         /// running, otherwise false if either is running.</returns>
         protected static bool IsFirstInstance()
         {
-            // Check that the tool is not already running.
-            bool createdNew;
-            _toolMutex = new Mutex(true, "Local\\HLUGisTool", out createdNew);
-
-            // If the tool (or database updater) is alread running then exit.
-            if (!createdNew)
-            {
-                MessageBox.Show("The HLU Tool is currently running on this machine.\n\nApplication cannot start.", "HLU Database Updater",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-
-                _toolMutex = null;
-
-                Application.Current.Shutdown();
-                return false;
-            }
-
-            // Keep the mutex referene alive until the normal
-            // termination of the program.
-            GC.KeepAlive(_toolMutex);
-
             // Check that the database updater is not already running.
+            bool createdNew;
             _updaterMutex = new Mutex(true, "Local\\HLUDbUpdater", out createdNew);
 
             // If the tool (or database updater) is alread running then exit.
@@ -134,6 +133,25 @@ namespace HLU
             // Keep the mutex referene alive until the normal
             // termination of the program.
             GC.KeepAlive(_updaterMutex);
+
+            // Check that the tool is not already running.
+            _toolMutex = new Mutex(true, "Local\\HLUGisTool", out createdNew);
+
+            // If the tool (or database updater) is alread running then exit.
+            if (!createdNew)
+            {
+                MessageBox.Show("The HLU Tool is currently running on this machine.\n\nApplication cannot start.", "HLU Database Updater",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                _toolMutex = null;
+
+                Application.Current.Shutdown();
+                return false;
+            }
+
+            // Keep the mutex referene alive until the normal
+            // termination of the program.
+            GC.KeepAlive(_toolMutex);
 
             return true;
         }

@@ -1,5 +1,5 @@
 ﻿// HLUTool is used to view and maintain habitat and land use GIS data.
-// Copyright © 2013 Andy Foy
+// Copyright © 2014 Sussex Biodiversity Record Centre
 // 
 // This file is part of HLUTool.
 // 
@@ -44,6 +44,7 @@ namespace HLU.UI.ViewModel
             Drop,
             Alter,
             Truncate,
+            Select,
             Insert,
             Update,
             Delete,
@@ -636,6 +637,9 @@ namespace HLU.UI.ViewModel
             string errorMessage;
             bool transactionStarted = false;
             bool ignoreErrors = false;
+            int timeout = _db.Connection.ConnectionTimeout;
+            bool displayResults = false;
+            bool skipVersionUpdate = false;
             String connTypes = String.Empty;
 
             // Add a slight delay so that progress can be followed by
@@ -694,7 +698,7 @@ namespace HLU.UI.ViewModel
                 ScriptProgress = 0;
 
                 // Start a database transaction.
-                transactionStarted = _db.BeginTransaction(true, IsolationLevel.ReadCommitted);
+                transactionStarted = _db.BeginTransaction(true, IsolationLevel.Serializable);
 
                 // Process each line in the script.
                 foreach (string line in lines)
@@ -760,7 +764,31 @@ namespace HLU.UI.ViewModel
                                     ignoreErrors = false;
 
                                 specialSet = true;
+                                break;
+                            case "timeout":
+                                int setTime;
+                                if ((words.Length == 3) && (Int32.TryParse(words[2], out setTime)))
+                                    timeout = setTime;
+                                else
+                                    timeout = _db.Connection.ConnectionTimeout;
 
+                                specialSet = true;
+                                break;
+                            case "display_results":
+                                if (words[2].ToLower() == "on")
+                                    displayResults = true;
+                                else if (words[2].ToLower() == "off")
+                                    displayResults = false;
+
+                                specialSet = true;
+                                break;
+                            case "skip_version_update":
+                                if (words[2].ToLower() == "on")
+                                    skipVersionUpdate = true;
+                                else if (words[2].ToLower() == "off")
+                                    skipVersionUpdate = false;
+
+                                specialSet = true;
                                 break;
                         }
 
@@ -789,17 +817,37 @@ namespace HLU.UI.ViewModel
                     String newSqlCmd = ReplaceStringQualifiers(sqlCmd);
 
                     // Execute the new sql command.
-                    if (_db.ExecuteNonQuery(newSqlCmd,
-                        _db.Connection.ConnectionTimeout, CommandType.Text, out errorMessage) == -1)
+                    int result;
+                    if ((displayResults) && (firstWord.ToLower() == "select"))
                     {
-                        if ((!ignoreErrors) && (!String.IsNullOrEmpty(errorMessage)))
+                        // Execute the SELECT command as a scalar which returns the first row/column
+                        // of the results.
+                        result = (int)_db.ExecuteScalar(newSqlCmd, timeout, CommandType.Text);
+                        MessageText = String.Format("Result of command '{0}' = {1}.", sqlCmd, result);
+                    }
+                    else
+                    {
+                        // Execute the command as a non-query which only returns the number
+                        // of rows affected by the command.
+                        result = _db.ExecuteNonQuery(newSqlCmd, timeout, CommandType.Text, out errorMessage);
+                        // If the number of rows affected is -1 then there was an error
+                        if (result == -1)
                         {
-                            // Add a message to the message text.
-                            MessageText = String.Format("Error processing script {0} ... update stopped.", _scriptName);
+                            // If errors are not to be ignored and there is an error then
+                            // report it.
+                            if ((!ignoreErrors) && (!String.IsNullOrEmpty(errorMessage)))
+                            {
+                                // Add a message to the message text.
+                                MessageText = String.Format("Error processing script {0} ... update stopped.", _scriptName);
 
-                            throw new Exception(String.Format("Failed to execute command\n\n'{0}'.\n\n{1}.",
-                                sqlCmd, errorMessage));
+                                throw new Exception(String.Format("Failed to execute command\n\n'{0}'.\n\n{1}.",
+                                    sqlCmd, errorMessage));
+                            }
                         }
+                        // If there were no errors and the results are to be displayed
+                        // then display them.
+                        else if (displayResults)
+                            MessageText = String.Format("Result of command '{0}' = {1}.", sqlCmd, result);
                     }
 
                     // Increment the progress bar for each line processed.
@@ -861,12 +909,20 @@ namespace HLU.UI.ViewModel
                 }
 
                 // Update the database version in the lut_version table with the latest
-                // script name.
-                _versions.DbVersion = scriptNum;
-                _dbVersion = _versions.DbVersion;
+                // script name (unless the update is to be skipped).
+                if (skipVersionUpdate)
+                {
+                    // Add the script name to the message text.
+                    MessageText = String.Format("Script {0} processing completed - database version update skipped.", _scriptName);
+                }
+                else
+                {
+                    _versions.DbVersion = scriptNum;
+                    _dbVersion = _versions.DbVersion;
 
-                // Add the script name to the message text.
-                MessageText = String.Format("Script {0} processing completed.", _scriptName);
+                    // Add the script name to the message text.
+                    MessageText = String.Format("Script {0} processing completed.", _scriptName);
+                }
 
                 // Indicate that the script completed successfully.
                 scriptCompleted = true;
