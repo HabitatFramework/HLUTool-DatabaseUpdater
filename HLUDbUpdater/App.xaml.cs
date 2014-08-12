@@ -94,10 +94,6 @@ namespace HLU
 
         protected override void OnExit(ExitEventArgs e)
         {
-            // Release the HLU Tool mutex if it exists.
-            if (_toolMutex != null)
-                _toolMutex.ReleaseMutex();
-
             // Release the HLU Database Updater mutex if it exists.
             if (_updaterMutex != null)
                 _updaterMutex.ReleaseMutex();
@@ -149,9 +145,9 @@ namespace HLU
                 return false;
             }
 
-            // Keep the mutex referene alive until the normal
-            // termination of the program.
-            GC.KeepAlive(_toolMutex);
+            // Release the HLU Tool mutex.
+            if (_toolMutex != null)
+                _toolMutex.ReleaseMutex();
 
             return true;
         }
