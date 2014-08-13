@@ -300,3 +300,6 @@ INSERT INTO [lut_habitat_type_ihs_habitat] (code_habitat_type, code_habitat, com
 INSERT INTO [lut_habitat_type_ihs_habitat] (code_habitat_type, code_habitat, comments, added_by, added_date, modified_by, modified_date, system_supplied, custodian) VALUES ('ICAT-WC', 'WC11', NULL, 'Andy Foy', #2014-08-15#, NULL, NULL, 1, '0000')
 INSERT INTO [lut_habitat_type_ihs_habitat] (code_habitat_type, code_habitat, comments, added_by, added_date, modified_by, modified_date, system_supplied, custodian) VALUES ('ICAT-WC', 'WC1Z', NULL, 'Andy Foy', #2014-08-15#, NULL, NULL, 1, '0000')
 INSERT INTO [lut_habitat_type_ihs_habitat] (code_habitat_type, code_habitat, comments, added_by, added_date, modified_by, modified_date, system_supplied, custodian) VALUES ('ICAT-WC', 'WCZ', NULL, 'Andy Foy', #2014-08-15#, NULL, NULL, 1, '0000')
+
+/* Make all ICAT habitat types local. */
+UPDATE [lut_habitat_type] SET is_local = 1 WHERE habitat_class_code = 'ICAT'

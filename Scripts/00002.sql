@@ -1850,6 +1850,9 @@ UPDATE [lut_habitat_type] new_t INNER JOIN [lut_habitat_type_temp] old_t ON new_
 /* Drop the temporary copy of the lut_habitat_type table. */
 DROP TABLE [lut_habitat_type_temp]
 
+/* Make sure the 'Not Applicable' habitat types is local. */
+UPDATE [lut_habitat_type] SET is_local = 1 WHERE habitat_class_code = 'N/A'
+
 /* Reinstate the constraints on the lut_habitat_type table. */
 [SqlServer,PostgreSql,Oracle]
 ALTER TABLE [lut_ihs_complex] WITH CHECK ADD CONSTRAINT fk_lut_ihs_complex_lut_habitat_type FOREIGN KEY(bap_habitat) REFERENCES [lut_habitat_type] (code)
