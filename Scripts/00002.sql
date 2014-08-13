@@ -1841,14 +1841,14 @@ INSERT INTO [lut_habitat_type] (habitat_class_code, code, name, description, is_
 INSERT INTO [lut_habitat_type] (habitat_class_code, code, name, description, is_local, sort_order) VALUES ('PW', 'PW-C', 'C', 'Birch woodland (Group 12)', 1, 0)
 
 /* Update the is_local flag on the lut_habitat_type table from the temporary copy. */
-/* [SqlServer,PostgreSql,Oracle] */
-/* UPDATE [lut_habitat_type] SET is_local = old_t.is_local FROM [lut_habitat_type] new_t INNER JOIN [lut_habitat_type_temp] old_t ON new_t.code = old_t.code */
-/* [Access] */
-/* UPDATE [lut_habitat_type] new_t INNER JOIN [lut_habitat_type_temp] old_t ON new_t.code = old_t.code SET new_t.is_local = old_t.is_local */
-/* [All] */
+[SqlServer,PostgreSql,Oracle]
+UPDATE [lut_habitat_type] SET is_local = old_t.is_local FROM [lut_habitat_type] new_t INNER JOIN [lut_habitat_type_temp] old_t ON new_t.code = old_t.code
+[Access]
+UPDATE [lut_habitat_type] new_t INNER JOIN [lut_habitat_type_temp] old_t ON new_t.code = old_t.code SET new_t.is_local = old_t.is_local
+[All]
 
 /* Drop the temporary copy of the lut_habitat_type table. */
-/* DROP TABLE [lut_habitat_type_temp] */
+DROP TABLE [lut_habitat_type_temp]
 
 /* Reinstate the constraints on the lut_habitat_type table. */
 [SqlServer,PostgreSql,Oracle]
