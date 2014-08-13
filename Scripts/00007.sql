@@ -1,3 +1,15 @@
+/* Switch off error handling. */
+SET IGNORE_ERRORS ON
+
+/* Try and insert any potentially missing IHS habitats that may be referenced by the lut_habitat_type_ihs_habitat table. */
+INSERT INTO [lut_ihs_habitat] (code,description,category,bap_priority,man_formation,man_management,default_complex_code,nvc_codes,code_bap_priority_habitat,polygon,line,point,is_local,sort_order, added_by, added_date, modified_by, modified_date, system_supplied, custodian) VALUES ('AZ0', 'Unidentified water', 'AZ', 0, 1, 0, NULL, NULL, NULL, 1, 0, 0, 1, 999, 'Andy Foy', #2014-08-15#, NULL, NULL, 1, '0000')
+
+/* Switch on error handling again. */
+SET IGNORE_ERRORS OFF
+
+/* Delete the ICAT entries from the lut_habitat_type_ihs_habitat table. */
+DELETE FROM [lut_habitat_type_ihs_habitat] WHERE code_habitat_type LIKE 'ICAT-%'
+
 /* Insert the IHS Category habitat type xrefs into the lut_habitat_type_ihs_habitat table. */
 INSERT INTO [lut_habitat_type_ihs_habitat] (code_habitat_type, code_habitat, comments, added_by, added_date, modified_by, modified_date, system_supplied, custodian) VALUES ('ICAT-AR', 'AR0', NULL, 'Andy Foy', #2014-08-15#, NULL, NULL, 1, '0000')
 INSERT INTO [lut_habitat_type_ihs_habitat] (code_habitat_type, code_habitat, comments, added_by, added_date, modified_by, modified_date, system_supplied, custodian) VALUES ('ICAT-AR', 'AR1', NULL, 'Andy Foy', #2014-08-15#, NULL, NULL, 1, '0000')

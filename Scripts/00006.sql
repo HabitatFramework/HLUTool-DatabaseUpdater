@@ -1,3 +1,6 @@
+/* Delete the BHAP entries from the lut_habitat_type_ihs_habitat table. */
+DELETE FROM [lut_habitat_type_ihs_habitat] WHERE code_habitat_type LIKE 'BHAP-%'
+
 /* Insert the BAP Broad Priority habitat type xrefs into the lut_habitat_type_ihs_habitat table. */
 INSERT INTO [lut_habitat_type_ihs_habitat] (code_habitat_type, code_habitat, comments, added_by, added_date, modified_by, modified_date, system_supplied, custodian) VALUES ('BHAP-RS', 'AR0', NULL, 'Andy Foy', #2014-08-15#, NULL, NULL, 1, '0000')
 INSERT INTO [lut_habitat_type_ihs_habitat] (code_habitat_type, code_habitat, comments, added_by, added_date, modified_by, modified_date, system_supplied, custodian) VALUES ('BHAP-RS', 'AR1', NULL, 'Andy Foy', #2014-08-15#, NULL, NULL, 1, '0000')
