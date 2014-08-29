@@ -57,7 +57,7 @@ namespace HLU.UI.ViewModel
 
         private ICommand _okCommand;
         private ICommand _cancelCommand;
-        private string _displayName = "HLU Database Updater v1.0.0";
+        private string _displayName = "HLU Database Updater v1.0.1";
         private string _messageText = String.Empty;
         private DbBase _db;
         private HluDataSet _hluDS;
@@ -525,7 +525,8 @@ namespace HLU.UI.ViewModel
 
                 // Get the directory of the Scripts sub-folder.
                 string scriptsDirectory = Path.Combine(currentDirectory, "Scripts");
-                _scriptsPath = new Uri(scriptsDirectory).AbsolutePath;
+                _scriptsPath = scriptsDirectory;
+                //_scriptsPath = new Uri(scriptsDirectory).AbsolutePath;
 
                 // Get an array of all the .sql files in the sub-folder.
                 string[] scripts = Directory.GetFiles(_scriptsPath, "*.sql").OrderBy(f => f).ToArray();
