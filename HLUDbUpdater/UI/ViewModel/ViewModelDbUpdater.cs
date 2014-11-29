@@ -1003,7 +1003,7 @@ namespace HLU.UI.ViewModel
                 }
             }
 
-            // Check if any date strings are found (delimited by single quotes)
+            // Check if any strings are found (delimited by single quotes)
             // in the sql command.
             i1 = 0;
             i2 = 0;
@@ -1046,7 +1046,7 @@ namespace HLU.UI.ViewModel
                 }
             }
 
-            // Check if any date strings are found (delimited by '#' characters)
+            // Check if any dates are found (delimited by '#' characters)
             // in the sql command.
             i1 = 0;
             i2 = 0;
