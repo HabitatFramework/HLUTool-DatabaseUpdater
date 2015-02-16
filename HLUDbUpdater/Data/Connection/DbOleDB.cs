@@ -1,5 +1,5 @@
 ﻿// HLUTool is used to view and maintain habitat and land use GIS data.
-// Copyright © 2014 Sussex Biodiversity Record Centre
+// Copyright © 2014-15 Sussex Biodiversity Record Centre
 // 
 // This file is part of HLUTool.
 // 
@@ -101,8 +101,13 @@ namespace HLU.Data.Connection
             if ((cn.State == ConnectionState.Open) &&
                 (previousConnectionState != ConnectionState.Open)) cn.Close();
 
-            if (provider.StartsWith("microsoft.jet.oledb"))
+            //---------------------------------------------------------------------
+            // Enable connection using Microsoft ACE driver.
+            // 
+            if (provider.StartsWith("microsoft.jet.oledb") ||
+                provider.StartsWith("microsoft.ace.oledb.12.0"))
                 return Backends.Access;
+            //---------------------------------------------------------------------
             else if (provider.StartsWith("sqloledb"))
                 return Backends.SqlServer;
             else if (provider.StartsWith("oraoledb"))

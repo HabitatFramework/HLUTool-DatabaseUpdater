@@ -1,5 +1,5 @@
 ﻿// HLUTool is used to view and maintain habitat and land use GIS data.
-// Copyright © 2014 Sussex Biodiversity Record Centre
+// Copyright © 2014-15 Sussex Biodiversity Record Centre
 // 
 // This file is part of HLUTool.
 // 
@@ -168,7 +168,12 @@ namespace HLU.UI.ViewModel
             if (connection == null)
                 return false;
             else
-                return connection.Provider.ToLower().StartsWith("microsoft.jet.oledb");
+                //---------------------------------------------------------------------
+                // Enable connection using Microsoft ACE driver.
+                //
+                return (connection.Provider.ToLower().StartsWith("microsoft.jet.oledb") ||
+                    (connection.Provider.ToLower().StartsWith("microsoft.ace.oledb.12.0")));
+                //---------------------------------------------------------------------
         }
 
         private bool IsSqlServer(ADODB.Connection connection)
@@ -498,8 +503,12 @@ namespace HLU.UI.ViewModel
 
                 if (String.IsNullOrEmpty(_connStrBuilder.ConnectionString))
                     error.Append(", connection");
-                if ((_connAdo != null) && !_connAdo.Provider.StartsWith("Microsoft.Jet.OLEDB") && 
+                //---------------------------------------------------------------------
+                // Enable connection using Microsoft ACE driver.
+                //
+                if ((_connAdo != null) && !IsMsAccess(_connAdo) && 
                     String.IsNullOrEmpty(_defaultSchema)) error.Append(", default schema");
+                //---------------------------------------------------------------------
 
                 if (error.Length > 0)
                     return error.Remove(0, 1).Insert(0, "Please provide").ToString();
@@ -521,8 +530,12 @@ namespace HLU.UI.ViewModel
                             error = "Please create a connection";
                         break;
                     case "DefaultSchema":
-                        if ((_connAdo != null) && !_connAdo.Provider.StartsWith("Microsoft.Jet.OLEDB") && 
+                        //---------------------------------------------------------------------
+                        // Enable connection using Microsoft ACE driver.
+                        //
+                        if ((_connAdo != null) && !IsMsAccess(_connAdo) && 
                             String.IsNullOrEmpty(_defaultSchema)) error = "Please provide a default schema";
+                        //---------------------------------------------------------------------
                         break;
                 }
 
