@@ -5,7 +5,7 @@ ALTER TABLE [lut_legacy_habitat] ADD CONSTRAINT pk__legacy_habitat PRIMARY KEY C
 /* Set a longer timeout to allow the updates to run. */
 SET TIMEOUT 120
 
-/*Insert the existing legacy_habitats into the new table. */
+/* Insert the existing legacy_habitats into the new table. */
 INSERT INTO [lut_legacy_habitat] SELECT DISTINCT legacy_habitat AS code, legacy_habitat AS description, 0 AS sort_order, 'Andy Foy' AS added_by, #2016-03-29# AS added_date, NULL AS modified_by, NULL AS modified_date, 0 AS system_supplied, '0000' AS custodian FROM [incid] WHERE legacy_habitat IS NOT NULL ORDER BY legacy_habitat
 
 /* Reset the default timeout. */
