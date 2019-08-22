@@ -1,4 +1,4 @@
-HLU Tool Database Updater 1.0.0
+HLU Tool Database Updater 1.0.1
 
 Copyright © 2014 Sussex Biodiversity Record Centre
 
