@@ -70,4 +70,4 @@ ALTER TABLE [lut_osmm_ihs_xref] WITH CHECK ADD CONSTRAINT fk_lut_osmm_ihs_xref_i
 ALTER TABLE [lut_osmm_ihs_xref] CHECK CONSTRAINT fk_lut_osmm_ihs_xref_ihs_matrix3
 [Access]
 ALTER TABLE [lut_osmm_ihs_xref] ADD CONSTRAINT fk_lut_osmm_ihs_xref_ihs_matrix3 FOREIGN KEY(ihs_matrix3) REFERENCES [lut_ihs_matrix] (code)
-All]
+[All]
